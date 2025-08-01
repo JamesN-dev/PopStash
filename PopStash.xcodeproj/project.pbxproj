@@ -6,13 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		97A3452E2E39C1E6006490AB /* PopStashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A3452D2E39C1E6006490AB /* PopStashApp.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		7E1EEF102DF9DEEA00609AAA /* PopStash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PopStash.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		97A3452D2E39C1E6006490AB /* PopStashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopStashApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +32,6 @@
 		7E1EEF072DF9DEEA00609AAA = {
 			isa = PBXGroup;
 			children = (
-				97A3452D2E39C1E6006490AB /* PopStashApp.swift */,
 				7E1EEF122DF9DEEA00609AAA /* PopStash */,
 				7E1EEF112DF9DEEA00609AAA /* Products */,
 			);
@@ -125,7 +119,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97A3452E2E39C1E6006490AB /* PopStashApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,7 +160,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = RAB299S7G6;
+				DEVELOPMENT_TEAM = 2S6TYYVZ3P;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -231,7 +224,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = RAB299S7G6;
+				DEVELOPMENT_TEAM = 2S6TYYVZ3P;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -257,7 +250,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = PopStash/PopStash.entitlements;
+				CODE_SIGN_ENTITLEMENTS = PopStash/Entitlements/PopStash.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -284,7 +277,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = PopStash/PopStashRelease.entitlements;
+				CODE_SIGN_ENTITLEMENTS = PopStash/Entitlements/PopStash.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
