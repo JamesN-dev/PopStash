@@ -1,12 +1,4 @@
 //
-//  PreferencesManager 2.swift
-//  PopStash
-//
-//  Created by atetraxx on 7/31/25.
-//
-
-
-//
 //  PreferencesManager.swift
 //  PopStash
 //
@@ -20,38 +12,38 @@ import SwiftUI
 /// Handles all app settings and user preferences
 @Observable
 final class PreferencesManager {
-    
+
     // MARK: - Hotkey Preferences
     var useOptionCHotkey: Bool = true
     var enableHotkeys: Bool = true
-    
+
     // MARK: - Popup Preferences
     var autoShowPopup: Bool = true
     var popupDismissTime: Double = 5.0
     var enablePopupAnimations: Bool = true
-    
+
     // MARK: - History Preferences
     var maxHistoryItems: Int = 100
     var autoSaveToHistory: Bool = true
-    var enableImageCapture: Bool = false // MVP is text-only
-    
+    var enableImageCapture: Bool = false  // MVP is text-only
+
     // MARK: - UI Preferences
     var menuBarIcon: String = "doc.on.clipboard"
     var showItemCount: Bool = true
     var enableKeyboardShortcuts: Bool = true
-    
+
     // MARK: - Privacy Preferences
     var clearHistoryOnQuit: Bool = false
-    var enableAnalytics: Bool = false // Always respect privacy
-    
+    var enableAnalytics: Bool = false  // Always respect privacy
+
     // MARK: - Storage
     private let userDefaults = UserDefaults.standard
     private let preferencesKey = "PopStashPreferences"
-    
+
     init() {
         loadPreferences()
     }
-    
+
     // MARK: - Persistence
     func savePreferences() {
         let preferences = PreferencesData(
@@ -69,18 +61,19 @@ final class PreferencesManager {
             clearHistoryOnQuit: clearHistoryOnQuit,
             enableAnalytics: enableAnalytics
         )
-        
+
         if let encoded = try? JSONEncoder().encode(preferences) {
             userDefaults.set(encoded, forKey: preferencesKey)
         }
     }
-    
+
     private func loadPreferences() {
         guard let data = userDefaults.data(forKey: preferencesKey),
-              let preferences = try? JSONDecoder().decode(PreferencesData.self, from: data) else {
-            return // Use defaults
+            let preferences = try? JSONDecoder().decode(PreferencesData.self, from: data)
+        else {
+            return  // Use defaults
         }
-        
+
         useOptionCHotkey = preferences.useOptionCHotkey
         enableHotkeys = preferences.enableHotkeys
         autoShowPopup = preferences.autoShowPopup
@@ -95,7 +88,7 @@ final class PreferencesManager {
         clearHistoryOnQuit = preferences.clearHistoryOnQuit
         enableAnalytics = preferences.enableAnalytics
     }
-    
+
     // MARK: - Actions
     func resetToDefaults() {
         useOptionCHotkey = true
@@ -111,7 +104,7 @@ final class PreferencesManager {
         enableKeyboardShortcuts = true
         clearHistoryOnQuit = false
         enableAnalytics = false
-        
+
         savePreferences()
     }
 }
@@ -138,11 +131,11 @@ extension PreferencesManager {
     var popupDismissTimeOptions: [Double] {
         [3.0, 5.0, 7.0, 10.0, 15.0]
     }
-    
+
     var maxHistoryOptions: [Int] {
         [50, 100, 200, 500, 1000]
     }
-    
+
     var menuBarIconOptions: [String] {
         ["doc.on.clipboard", "clipboard", "doc.text", "square.and.pencil"]
     }
