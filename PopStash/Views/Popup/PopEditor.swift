@@ -70,11 +70,11 @@ struct PopEditor: View {
                 .focused($isTextEditorFocused)
                 .padding(12)
                 .background(Color(NSColor.textBackgroundColor))
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        isTextEditorFocused = true
+                .onAppear{ DispatchQueue.main.async {
+                    isTextEditorFocused = true
                     }
                 }
+                
             
             // Bottom action bar with character count
             HStack(spacing: 8) {

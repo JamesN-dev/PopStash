@@ -31,6 +31,7 @@ final class PreferencesManager {
     var menuBarIcon: String = "doc.on.clipboard"
     var showItemCount: Bool = true
     var enableKeyboardShortcuts: Bool = true
+    var enableHoverEffect: Bool = true
 
     // MARK: - Privacy Preferences
     var clearHistoryOnQuit: Bool = false
@@ -59,7 +60,8 @@ final class PreferencesManager {
             showItemCount: showItemCount,
             enableKeyboardShortcuts: enableKeyboardShortcuts,
             clearHistoryOnQuit: clearHistoryOnQuit,
-            enableAnalytics: enableAnalytics
+            enableAnalytics: enableAnalytics,
+            enableHoverEffect: enableHoverEffect
         )
 
         if let encoded = try? JSONEncoder().encode(preferences) {
@@ -87,6 +89,7 @@ final class PreferencesManager {
         enableKeyboardShortcuts = preferences.enableKeyboardShortcuts
         clearHistoryOnQuit = preferences.clearHistoryOnQuit
         enableAnalytics = preferences.enableAnalytics
+        enableHoverEffect = preferences.enableHoverEffect
     }
 
     // MARK: - Actions
@@ -104,6 +107,7 @@ final class PreferencesManager {
         enableKeyboardShortcuts = true
         clearHistoryOnQuit = false
         enableAnalytics = false
+        enableHoverEffect = true
 
         savePreferences()
     }
@@ -124,6 +128,7 @@ private struct PreferencesData: Codable {
     let enableKeyboardShortcuts: Bool
     let clearHistoryOnQuit: Bool
     let enableAnalytics: Bool
+    let enableHoverEffect: Bool
 }
 
 // MARK: - Convenience Extensions
