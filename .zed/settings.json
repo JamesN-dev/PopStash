@@ -1,0 +1,18 @@
+{
+  "lsp": {
+    "sourcekit-lsp": {
+      "binary": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp"
+      }
+    }
+  },
+  "languages": {
+    "Swift": {
+      "enable_language_server": true,
+      "language_servers": ["sourcekit-lsp"],
+      "formatter": "language_server",
+      "format_on_save": "on",
+      "tab_size": 2
+    }
+  }
+}

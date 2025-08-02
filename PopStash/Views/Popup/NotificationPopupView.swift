@@ -1,5 +1,5 @@
 //
-//  NotificationPopupView 2.swift
+//  NotificationPopupView.swift
 //  PopStash
 //
 //  Created by atetraxx on 7/31/25.
@@ -11,10 +11,27 @@ import SwiftUI
 
 struct NotificationPopupView: View {
     @Bindable var popupManager: NotificationPopupManager
-    @State private var editText: String = ""
     @State private var isHovered = false
     @FocusState private var isTextEditorFocused: Bool
     @Environment(\.dismiss) private var dismiss
+    
+    // TODO: macOS 26.0+ - Implement smooth window morphing with windowResizeAnchor
+    // Replace separate notification/editor windows with single morphing window
+    // 
+    // @State private var windowSize: CGSize = CGSize(width: 340, height: 72)
+    // 
+    // .frame(width: windowSize.width, height: windowSize.height)
+    // .windowResizeAnchor(.topTrailing) // Anchor to top-right corner  
+    // .onChange(of: popupManager.isExpanded) { _, expanded in
+    //     withAnimation(.easeInOut(duration: 0.3)) {
+    //         windowSize = expanded ? 
+    //             CGSize(width: 400, height: 280) :  // Editor size
+    //             CGSize(width: 340, height: 72)    // Notification size
+    //     }
+    // }
+    //
+    // This will create a smooth morphing transition from notification → editor
+    // instead of opening separate windows. Much more elegant UX.
     
     var body: some View {
         Group {
@@ -33,13 +50,8 @@ struct NotificationPopupView: View {
             }
         }
         .onAppear {
-            editText = popupManager.currentText
-            print("🎨 NotificationPopupView appeared - isExpanded: \(popupManager.isExpanded), isShowing: \(popupManager.isShowing)")
-        }
-        .onChange(of: popupManager.currentText) { oldValue, newValue in
-            // FIXED: Sync editText when currentText changes
-            editText = newValue
-            print("🔄 Text updated: \(newValue.prefix(30))...")
+            // Auto-focus the popup when it appears so first click works
+            isTextEditorFocused = true
         }
         // Use proper SwiftUI material background instead of glassEffect
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -107,75 +119,22 @@ struct NotificationPopupView: View {
         .onTapGesture {
             popupManager.expandEditor()
         }
+        .focused($isTextEditorFocused)
         .frame(width: 340, height: 72)
     }
     
     private var expandedEditor: some View {
-        VStack(spacing: 0) {
-            // Simple header bar
-            HStack {
-                Text("Edit Clipboard")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                Button(action: {
-                    popupManager.dismissPopup()
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(PlainButtonStyle())
+        PopEditor(
+            text: popupManager.currentText,
+            onConfirm: { plainText in
+                popupManager.confirmEdit(plainText)
+                dismiss()
+            },
+            onCancel: {
+                popupManager.cancelEdit()
+                dismiss()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
-            
-            // Clean text editor - like Notepad
-            TextEditor(text: $editText)
-                .font(.system(size: 13, weight: .regular))
-                .scrollContentBackground(.hidden)
-                .background(Color(NSColor.textBackgroundColor))
-                .focused($isTextEditorFocused)
-                .onAppear {
-                    isTextEditorFocused = true
-                }
-            
-            // Simple bottom bar with buttons
-            HStack(spacing: 8) {
-                Button("Cancel") {
-                    popupManager.cancelEdit()
-                    dismiss()
-                }
-                .keyboardShortcut(.escape, modifiers: [])
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                
-                Spacer()
-                
-                Button("Save") {
-                    popupManager.confirmEdit(editText)
-                    dismiss()
-                }
-                .keyboardShortcut(.return, modifiers: [])
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
-        }
-        .background(Color(NSColor.windowBackgroundColor))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color(NSColor.separatorColor), lineWidth: 1)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
-        .frame(width: 400, height: 200)
+        )
     }
     
     private var truncatedText: String {
@@ -193,27 +152,13 @@ struct NotificationPopupOverlay: View {
     @Bindable var popupManager: NotificationPopupManager
     
     var body: some View {
-        ZStack {
-            if popupManager.isShowing {
-                Color.clear
-                    .ignoresSafeArea(.all)
-                
-                VStack {
-                    HStack {
-                        Spacer()
-                        NotificationPopupView(popupManager: popupManager)
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.9)),
-                                removal: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.95))
-                            ))
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.top, 20)
-                    
-                    Spacer()
-                }
-            }
+        if popupManager.isShowing {
+            NotificationPopupView(popupManager: popupManager)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.9)),
+                    removal: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.95))
+                ))
         }
-        .allowsHitTesting(popupManager.isShowing)
     }
+    
 }

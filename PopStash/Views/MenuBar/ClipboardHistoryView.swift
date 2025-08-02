@@ -6,20 +6,14 @@ struct ClipboardRowView: View {
     let item: ClipboardItem
     let index: Int
 
-    private var sourceAppIcon: NSImage {
-        guard let bundleID = item.sourceAppBundleID,
-              let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            return NSImage(systemSymbolName: "doc", accessibilityDescription: "Default Icon")!
-        }
-        return NSWorkspace.shared.icon(forFile: appURL.path)
-    }
-
     var body: some View {
         HStack(spacing: 10) {
-            Image(nsImage: sourceAppIcon)
+            // Use a simpler approach for the icon
+            Image(systemName: "doc")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 24, height: 24)
+                .foregroundColor(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
                 switch item.content {
@@ -49,7 +43,7 @@ struct ClipboardRowView: View {
             Spacer()
 
             if index < 9 {
-                Text("⌘\(index + 1)")
+                Text("⌥\(index + 1)")
                     .foregroundColor(.secondary)
                     .font(.system(size: 11))
             }
