@@ -37,6 +37,7 @@ final class NotificationPopupManager {
             isShowing = true
         }
         
+        
         startAutoDismissTimer()
     }
     

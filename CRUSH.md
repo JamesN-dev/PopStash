@@ -1,95 +1,72 @@
-# PopStash - CRUSH Development Guidelines
 
-## Project Overview
-PopStash is a next-generation macOS clipboard manager built with the latest Swift and SwiftUI frameworks targeting macOS 15.4+. It's designed to be ready for future macOS releases with a focus on App Store compliance, privacy, and modern Swift patterns.
+SwiftUI Window Focus + Dragging Issue - Need Scene-Level Solution
 
-## Build Commands
-- **Build**: Use Xcode Product → Build or Cmd+B
-- **Run**: Use Xcode Product → Run or Cmd+R
-- **Test**: No test suite currently exists in this project
-- **Archive**: Use Xcode Product → Archive for distribution builds
+I have a SwiftUI notification popup that requires two clicks to interact
+with:
 
-## Core Features
-- Text-only clipboard history with de-duplication
-- Option + C universal clipboard hotkey (user-initiated access only)
-- Notification-style editable popup buffer
-- Menu bar app (dockless) with native macOS feel
-- Modern "Liquid Glass" UI with ultraThickMaterial
+1. First click focuses the window
+2. Second click triggers the interaction
 
-## Code Style Guidelines
+Current Setup:
 
-### Language & Frameworks
-- Latest Swift with @Observable macro (NO ObservableObject)
-- Modern SwiftUI for all UI components
-- Pure SwiftUI Window management (NO NSWindow)
-- Modern concurrency (async/await) when needed
+• Using Window("Notification", id: "notification") in App file
+• Currently has .windowStyle(HiddenTitleBarWindowStyle()) and .
+windowLevel(.floating)
+• Want to switch to .windowStyle(.plain) to remove window buttons
+entirely
+• Notification content uses .onTapGesture (will convert to Button)
 
-### Imports Order
-1. Foundation/AppKit
-2. SwiftUI
-3. Third-party frameworks
+Dragging Implementation Problem: I have a perfect custom drag
+implementation in PopEditor.swift that uses:
 
-### Naming Conventions
-- camelCase for variables and functions
-- PascalCase for types and classes
-- Descriptive, meaningful names
+@State private var location = CGPoint(x: 200, y: 200)
+@GestureState private var startLocation: CGPoint?
+@State private var isDragging = false
 
-### Types & Declaration
-- Use explicit types where clarity is needed
-- Rely on type inference for simple cases
-- Prefer structs and value types over classes
+var drag: some Gesture {
+    DragGesture()
+        .onChanged { value in
+            self.location = value.location
+            isDragging = true
+        }
+        .onEnded { value in
+            isDragging = false
+        }
+}
 
-### Error Handling
-- Use do-catch blocks with descriptive error messages
-- Print errors with context: print("Error in \(function): \(error)")
+// Applied with: .position(location) and .gesture(drag)
 
-### Comments
-- Minimal inline comments focusing on why rather than what
-- Use // for single-line comments
-- Use /* */ for multi-line comments
+The Problem: This moves the view CONTENT but leaves the SwiftUI Window
+frame in place, creating a "floating content inside static window"
+effect.
 
-### File Organization
-- One main type per file
-- Group related functionality together
 
-## Architecture Patterns
+Questions:
 
-### State Management
-- @Observable for model objects only
-- @State with @Observable classes in views
-- @Environment(MyType.self) for shared state
-- NO @StateObject, @ObservedObject, or @EnvironmentObject
+1. Will .windowStyle(.plain) fix the focus issue by making the window
+immediately interactive?
+2. How do I move this exact drag implementation to the Window Scene
+level so it drags the entire window?
+3. What's the correct Scene-level modifier for window activation?
+4. Do floating windows (.windowLevel(.floating)) behave differently with
+auto-focus?
 
-### View Patterns
-- Use .onChange, .task instead of onReceive
-- SwiftUI Window(id:) for window management
-- .menuBarExtraStyle(.window) for menu bar apps
-- Identifiable with UUID for list items
+IMPORTANT - Use context7 to verify these uncertain items:
 
-### Hotkey System
-- RegisterEventHotKey (Carbon) for Option + C
-- User-initiated clipboard access only
-- No polling, timers, or background monitoring
+• Search "SwiftUI Window drag gesture scene level" - how to apply drag
+gestures to entire windows
+• Search "SwiftUI allowsWindowActivationEvents" - verify if this
+modifier exists and correct usage
+• Search "SwiftUI windowStyle plain focus behavior" - confirm if .plain
+windows auto-focus better
+• Search "SwiftUI windowLevel floating focus behavior" - understand
+floating window focus behavior
+• Search "SwiftUI Window scene modifiers" - complete list of available
+Window modifiers
 
-### Data Persistence
-- Codable with JSON encoding/decoding
-- ~/Library/Application Support for storage
-- NSPasteboard.detectFormats() before reading content
+Don't guess on any SwiftUI APIs - use context7 to fetch official
+documentation for each uncertain topic above.
 
-## Forbidden Legacy Patterns
-❌ ObservableObject + @Published
-❌ @StateObject / @ObservedObject
-❌ @EnvironmentObject
-❌ onReceive
-❌ NSWindow / NSViewRepresentable
-❌ NotificationCenter
-❌ Timer-based clipboard polling
-❌ Cmd + C detection
-
-## Privacy & Compliance Requirements
-✅ Option + C global hotkey only (user-initiated)
-✅ NSPasteboard.detectFormats() before reading
-✅ No background clipboard monitoring
-✅ No Cmd + C interception
-✅ App Store compliant - no accessibility APIs
-✅ macOS 15.4+ pasteboard privacy compliance
+Goal: Single-click interaction on a button-free, draggable notification
+popup where the entire window moves (not just content), working for both
+notification and editor states.

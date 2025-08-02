@@ -96,27 +96,26 @@ struct ClipboardHistoryView: View {
                 ScrollView {
                     LazyVStack(spacing: 2) {
                         ForEach(filteredHistory, id: \.element.id) { index, item in
-                            ClipboardRowView(item: item, index: index)
-                                .tag(item.id)
-                                .contextMenu {
-                                    Button(action: { /* Quick Look will go here */ }) {
-                                        Label("Quick Look", systemImage: "eye")
-                                    }
-                                    .keyboardShortcut("q", modifiers: .option)
-                                    
-                                    Divider()
-
-                                    Button(action: { clipboardManager.togglePin(for: item) }) {
-                                        Label(item.isPinned ? "Unpin" : "Pin", systemImage: "pin")
-                                    }
-                                    
-                                    Button(role: .destructive, action: { clipboardManager.deleteItem(with: item.id) }) {
-                                        Label("Delete", systemImage: "trash")
-                                    }
+                            Button(action: {
+                                clipboardManager.copyItemToClipboard(item: item)
+                            }) {
+                                ClipboardRowView(item: item, index: index)
+                            }
+                            .tag(item.id)
+                            .contextMenu {
+                                Button(action: { /* Quick Look will go here */ }) {
+                                    Label("Quick Look", systemImage: "eye")
                                 }
-                                .onTapGesture {
-                                    clipboardManager.copyItemToClipboard(item: item)
+                                .keyboardShortcut("q", modifiers: .option)
+                                Divider()
+                                Button(action: { clipboardManager.togglePin(for: item) }) {
+                                    Label(item.isPinned ? "Unpin" : "Pin", systemImage: "pin")
                                 }
+                                Button(role: .destructive, action: { clipboardManager.deleteItem(with: item.id) }) {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .buttonStyle(PopButtonStyle())
                         }
                     }
                     .padding(.horizontal, 8)

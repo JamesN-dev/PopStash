@@ -125,3 +125,8 @@ buildServer.json
 
 # Project specific
 .crush/
+.vscode/
+.zed/
+AGENTS.MD
+CRUSH.MD
+MVP.MD
