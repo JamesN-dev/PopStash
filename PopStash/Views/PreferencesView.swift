@@ -19,8 +19,7 @@ struct PreferencesView: View {
     @Environment(PreferencesManager.self) private var preferences
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
                 // Header
                 HStack {
                     Image(systemName: "gearshape.fill")
@@ -159,8 +158,7 @@ struct PreferencesView: View {
                 .padding()
                 .background(.ultraThickMaterial)
             }
-        }
-        .frame(width: 600, height: 500)
+        .frame(width: 400, height: 500)
     }
 }
 
