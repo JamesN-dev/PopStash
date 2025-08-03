@@ -20,8 +20,6 @@ private let logger = Logger(subsystem: "com.popstash.app", category: "main")
 
 @main
 struct PopStashApp: App {
-    // This adapter ensures our AppDelegate runs on launch.
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var clipboardManager = ClipboardManager()
     @State private var navigationPath = NavigationPath()
     @Environment(\.scenePhase) private var scenePhase
@@ -49,8 +47,8 @@ struct PopStashApp: App {
                     }
                 }
             }
-            .task {
-                appDelegate.setClipboardManager(clipboardManager)
+            .onAppear {
+                // Setup clipboard manager synchronously when the view appears
                 clipboardManager.popupManager.setWindowManager(windowManager)
                 logger.info("Clipboard manager setup complete")
             }
@@ -112,16 +110,29 @@ struct PopStashApp: App {
         .windowBackgroundDragBehavior(.disabled)
         .windowResizability(.contentMinSize)
         .restorationBehavior(.disabled)
+        .defaultWindowPlacement { windowProxy, context in
+            let displayBounds = context.defaultDisplay.visibleRect
+            let size = windowProxy.sizeThatFits(.unspecified)
+            let position = CGPoint(
+                x: displayBounds.maxX - size.width - 20,
+                y: displayBounds.minY + 60
+            )
+            logger.debug("SwiftUI positioning notification at: \(position)")
+            return WindowPlacement(position, size: size)
+        }
 
         Window("PopEditor", id: "textEditor") {
             EditorWindowContent(popupManager: clipboardManager.popupManager)
         }
+        .windowToolbarStyle(.unified(showsTitle: true))
+
+
         .windowResizability(.contentSize)
         .windowLevel(.floating)
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            
+
             // Position in top-right corner like the notification popup
             let position = CGPoint(
                 x: displayBounds.maxX - size.width - 20,

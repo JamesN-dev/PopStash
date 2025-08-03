@@ -52,6 +52,7 @@ final class PreferencesManager {
 
     init() {
         loadPreferences()
+        print("🔧 PreferencesManager init - enableHotkeys: \(enableHotkeys), enableKeyboardShortcuts: \(enableKeyboardShortcuts)")
     }
 
     // MARK: - Persistence

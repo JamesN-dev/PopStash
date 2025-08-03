@@ -42,6 +42,18 @@ struct PopEditor: View {
                         isTextEditorFocused = true
                     }
                 }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: {
+                            // Trigger Writing Tools for the focused text editor
+                            NSApp.sendAction(#selector(NSTextView.showWritingTools(_:)), to: nil, from: nil)
+                        }) {
+                            Image(systemName: "wand.and.stars")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .help("Writing Tools")
+                    }
+                }
 
             // Bottom action bar with character count
             HStack(spacing: 8) {
