@@ -15,11 +15,13 @@ private let logger = Logger(subsystem: "com.popstash.popup", category: "manager"
 @Observable
 final class NotificationPopupManager {
     var isShowing = false
-    var isExpanded = false
     var currentText = ""
     
     // Weak reference to parent ClipboardManager to avoid retain cycle
     private weak var clipboardManager: ClipboardManager?
+    
+    // Reference to window manager for opening editor window
+    private var windowManager: WindowManager?
     
     private var onConfirmCallback: ((String) -> Void)?
     private var onCancelCallback: (() -> Void)?
@@ -35,10 +37,21 @@ final class NotificationPopupManager {
         self.clipboardManager = manager
     }
     
+    // Set the window manager reference for opening editor window
+    func setWindowManager(_ manager: WindowManager) {
+        self.windowManager = manager
+    }
+    
+    func openEditorWindow() {
+        logger.debug("Opening editor window from notification")
+        stopAutoDismissTimer()
+        windowManager?.openEditorWindow()
+        dismissPopup() // Close the notification popup
+    }
+    
     func showPopup(with text: String, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
         // Reset state before showing new popup
         stopAutoDismissTimer()
-        isExpanded = false
         
         self.currentText = text
         self.onConfirmCallback = onConfirm
@@ -51,13 +64,6 @@ final class NotificationPopupManager {
         }
         
         startAutoDismissTimer()
-    }
-    
-    func expandEditor() {
-        stopAutoDismissTimer()
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.9)) {
-            isExpanded = true
-        }
     }
     
     func confirmEdit(_ editedText: String) {
@@ -75,7 +81,6 @@ final class NotificationPopupManager {
         stopAutoDismissTimer()
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             isShowing = false
-            isExpanded = false
         }
     }
     
@@ -87,13 +92,8 @@ final class NotificationPopupManager {
         logger.debug("Starting auto-dismiss timer")
         stopAutoDismissTimer() // Make sure to stop any existing timer
         autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            logger.debug("Timer fired - isExpanded: \(self?.isExpanded ?? false)")
-            if !(self?.isExpanded ?? false) {
-                logger.debug("Auto-dismissing popup")
-                self?.dismissPopup()
-            } else {
-                logger.debug("Not dismissing because popup is expanded")
-            }
+            logger.debug("Timer fired - auto-dismissing popup")
+            self?.dismissPopup()
         }
     }
     

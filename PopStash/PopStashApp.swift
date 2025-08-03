@@ -27,8 +27,8 @@ struct PopStashApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
-    @Environment(\.dismiss) private var dismiss
     @State private var preferencesManager = PreferencesManager()
+    @State private var windowManager = WindowManager()
 
     var body: some Scene {
         // MenuBarExtra with NavigationStack - (clipboard and preferences)
@@ -51,6 +51,7 @@ struct PopStashApp: App {
             }
             .task {
                 appDelegate.setClipboardManager(clipboardManager)
+                clipboardManager.popupManager.setWindowManager(windowManager)
                 logger.info("Clipboard manager setup complete")
             }
             // Default window size only
@@ -80,6 +81,11 @@ struct PopStashApp: App {
             switch newPhase {
             case .active:
                 logger.debug("App became active")
+                // Set up window manager when app becomes active
+                windowManager.setWindowActions(
+                    openWindow: { id in openWindow(id: id) },
+                    dismissWindow: { id in dismissWindow(id: id) }
+                )
             case .inactive:
                 logger.debug("App became inactive")
             case .background:
@@ -90,30 +96,12 @@ struct PopStashApp: App {
         }
         .onChange(of: clipboardManager.popupManager.isShowing) { oldValue, isShowing in
             if isShowing {
-                // Reset position by dismissing first, then reopening after delay
-                logger.debug("🔄 Resetting popup position - dismissing window")
-                dismissWindow(id: "notification")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    logger.debug("🔄 Reopening window after position reset")
-                    openWindow(id: "notification")
-                }
+                windowManager.openNotificationWindow()
             } else {
-                // When popup is dismissed, reset position for next time
-                logger.debug("❌ Popup dismissed - resetting position for next popup")
-                dismissWindow(id: "notification")
+                windowManager.closeNotificationWindow()
             }
         }
-        .onChange(of: clipboardManager.popupManager.isExpanded) { oldValue, isExpanded in
-            if isExpanded {
-                // When popup expands to editor, reset window position immediately
-                logger.debug("📝 Popup expanded to editor - resetting position")
-                dismissWindow(id: "notification")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    logger.debug("📝 Reopening after editor expansion")
-                    openWindow(id: "notification")
-                }
-            }
-        }
+
         // Popup notification window
         Window("Notification", id: "notification") {
             NotificationPopupOverlay(popupManager: clipboardManager.popupManager)
@@ -121,7 +109,7 @@ struct PopStashApp: App {
         }
         .windowStyle(.plain)
         .windowLevel(.floating)
-        .windowBackgroundDragBehavior(.enabled)
+        .windowBackgroundDragBehavior(.disabled)
         .windowResizability(.contentMinSize)
         .restorationBehavior(.disabled)  // Disable saving/restoring this window's state
         .defaultWindowPlacement { windowProxy, context in
@@ -137,37 +125,21 @@ struct PopStashApp: App {
         }
 
         Window("PopEditor", id: "textEditor") {
-            NavigationStack {
-                PopEditor(
-                    text: "",
-                    isDragging: false,
-                    onConfirm: { _ in },
-                    onCancel: { }
-                )
-                .navigationTitle("PopEditor")
-                .toolbar {
-                    ToolbarItem(placement: .navigation) {
-                        Spacer()
-                            .frame(width: 16)
-                    }
-                }
-                .toolbarBackground(.regularMaterial, for: .windowToolbar)
-            }
+            EditorWindowContent(popupManager: clipboardManager.popupManager)
         }
-        .windowStyle(.automatic)
         .windowResizability(.contentSize)
+        .windowLevel(.floating)
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-
-            // Position in center of screen
+            
+            // Position in top-right corner like the notification popup
             let position = CGPoint(
-                x: displayBounds.midX - (size.width / 2),
-                y: displayBounds.midY - (size.height / 2)
+                x: displayBounds.maxX - size.width - 20,
+                y: displayBounds.minY + 20
             )
 
             return WindowPlacement(position, size: size)
         }
-        .windowLevel(.floating)
     }
 }
