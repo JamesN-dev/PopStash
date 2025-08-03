@@ -95,9 +95,10 @@ struct NotificationPopupView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .frame(width: 340, height: 72)
+//            .frame(width: 340, height: 72)
         }
         .buttonStyle(PopButtonStyle())
+        .allowsWindowActivationEvents()
     }
 
     private var expandedEditor: some View {
@@ -135,6 +136,7 @@ struct NotificationPopupOverlay: View {
                     insertion: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.9)),
                     removal: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.95))
                 ))
+                .gesture(WindowDragGesture())
         }
     }
 

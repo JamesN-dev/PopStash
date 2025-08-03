@@ -32,10 +32,11 @@ final class PreferencesManager {
     var showItemCount: Bool = true
     var enableKeyboardShortcuts: Bool = true
     var enableHoverEffect: Bool = true
+    var lastClipboardWindowPosition: CGPoint? = nil
 
     // MARK: - Privacy Preferences
     var clearHistoryOnQuit: Bool = false
-    var enableAnalytics: Bool = false  // Always respect privacy
+    var enableAnalytics: Bool = false  // No implementation yet. Placeholder.
 
     // MARK: - Storage
     private let userDefaults = UserDefaults.standard

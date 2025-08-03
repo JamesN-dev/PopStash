@@ -67,6 +67,7 @@ struct ClipboardRowView: View {
 // This is the main view for the popover.
 struct ClipboardHistoryView: View {
     @Environment(ClipboardManager.self) private var clipboardManager
+    @Environment(PreferencesManager.self) private var preferencesManager
     @State private var searchText = ""
     @State private var selectedItemId: UUID?
 
@@ -132,7 +133,14 @@ struct ClipboardHistoryView: View {
                     Text("\(clipboardManager.history.count) items")
                         .font(.caption)
                     Spacer()
-                    Button("Preferences…") { openPreferences() }
+                    Button("Preferences…") {
+                        // Navigation handled by NavigationLink - no need for manual positioning
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .background(
+                        NavigationLink("", value: "preferences")
+                            .opacity(0)
+                    )
                         .font(.system(size: 12))
                     Button("Clear") { clipboardManager.clearHistory() }
                         .font(.system(size: 12))

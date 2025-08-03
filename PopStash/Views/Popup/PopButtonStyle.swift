@@ -16,10 +16,9 @@ struct PopButtonStyle: ButtonStyle {
         let configuration: Configuration
         @State private var isHovered = false
         @Environment(PreferencesManager.self) private var preferences
-        @Environment(\.isHoverEffectEnabled) private var isHoverEffectEnabled
 
         var body: some View {
-            let hoverEnabled = preferences.enableHoverEffect && isHoverEffectEnabled
+            let hoverEnabled = preferences.enableHoverEffect
             configuration.label
                 .padding(10)
                 .background(backgroundForState(isPressed: configuration.isPressed))
