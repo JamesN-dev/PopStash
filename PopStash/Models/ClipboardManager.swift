@@ -55,24 +55,56 @@ final class ClipboardManager {
         
         // Get the focused UI element
         var focusedElement: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(systemWideElement, "AXFocusedUIElement" as CFString, &focusedElement)
+        let result = AXUIElementCopyAttributeValue(systemWideElement, kAXFocusedUIElementAttribute as CFString, &focusedElement)
         
         guard result == .success, let element = focusedElement else {
-            logger.debug("Could not get focused UI element")
+            logger.debug("Could not get focused UI element - result: \(result.rawValue)")
             return nil
         }
         
-        // Try to get selected text from the focused element
+        // Try multiple approaches to get selected text
+        let axElement = element as! AXUIElement
+        
+        // Method 1: Try AXSelectedText directly
         var selectedText: CFTypeRef?
-        let textResult = AXUIElementCopyAttributeValue(element as! AXUIElement, "AXSelectedText" as CFString, &selectedText)
+        var textResult = AXUIElementCopyAttributeValue(axElement, kAXSelectedTextAttribute as CFString, &selectedText)
         
-        guard textResult == .success, let text = selectedText as? String, !text.isEmpty else {
-            logger.debug("No selected text found")
-            return nil
+        if textResult == .success, let text = selectedText as? String, !text.isEmpty {
+            logger.info("Found selected text via AXSelectedText: '\(text.prefix(50))'")
+            return text
         }
         
-        logger.info("Found selected text: '\(text.prefix(50))'")
-        return text
+        // Method 2: Try getting the role and then text
+        var role: CFTypeRef?
+        let roleResult = AXUIElementCopyAttributeValue(axElement, kAXRoleAttribute as CFString, &role)
+        
+        if roleResult == .success, let roleString = role as? String {
+            logger.debug("Focused element role: \(roleString)")
+            
+            // For text fields, text areas, and web areas, try again
+            if roleString.contains("Text") || roleString.contains("WebArea") {
+                textResult = AXUIElementCopyAttributeValue(axElement, kAXSelectedTextAttribute as CFString, &selectedText)
+                if textResult == .success, let text = selectedText as? String, !text.isEmpty {
+                    logger.info("Found selected text via role-based approach: '\(text.prefix(50))'")
+                    return text
+                }
+            }
+        }
+        
+        // Method 3: Try getting text from parent elements (for complex UI)
+        var parent: CFTypeRef?
+        let parentResult = AXUIElementCopyAttributeValue(axElement, kAXParentAttribute as CFString, &parent)
+        
+        if parentResult == .success, let parentElement = parent {
+            textResult = AXUIElementCopyAttributeValue(parentElement as! AXUIElement, kAXSelectedTextAttribute as CFString, &selectedText)
+            if textResult == .success, let text = selectedText as? String, !text.isEmpty {
+                logger.info("Found selected text via parent element: '\(text.prefix(50))'")
+                return text
+            }
+        }
+        
+        logger.debug("No selected text found - textResult: \(textResult.rawValue)")
+        return nil
     }
 
     private func setupKeyboardShortcuts() {
