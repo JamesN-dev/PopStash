@@ -8,6 +8,9 @@
 
 // NotificationPopupView.swift
 import SwiftUI
+import OSLog
+
+private let logger = Logger(subsystem: "com.popstash.popup", category: "view")
 
 struct NotificationPopupView: View {
     @Bindable var popupManager: NotificationPopupManager
@@ -22,6 +25,7 @@ struct NotificationPopupView: View {
     var body: some View {
         collapsedNotification
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .frame(width: 340, height: 72)
     }
 
     private var collapsedNotification: some View {
@@ -63,7 +67,6 @@ struct NotificationPopupView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-//            .frame(width: 340, height: 72)
         }
         .buttonStyle(PopButtonStyle())
         .allowsWindowActivationEvents()
@@ -105,6 +108,9 @@ struct NotificationPopupOverlay: View {
                         }
                         .simultaneously(with: WindowDragGesture())
                 )
+                .onAppear {
+                    logger.debug("NotificationPopupOverlay: popup appeared")
+                }
         }
     }
 
