@@ -31,10 +31,14 @@ struct PopEditor: View {
                 .font(.system(.body, design: .default))
                 .scrollContentBackground(.hidden)
                 .focused($isTextEditorFocused)
+                .textEditorStyle(.automatic)
+                .writingToolsBehavior(.complete)
+                .allowsHitTesting(true)
                 .padding(12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onAppear {
-                    DispatchQueue.main.async {
+                    // Give window time to settle before focusing
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         isTextEditorFocused = true
                     }
                 }
@@ -83,9 +87,7 @@ struct PopEditor: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(.regularMaterial)
         }
-        .background(.regularMaterial)
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(
@@ -93,7 +95,7 @@ struct PopEditor: View {
                     lineWidth: 2
                 )
         )
-        .frame(width: 400, height: 280)
+        .frame(minWidth: 400,  maxWidth: .infinity, minHeight: 280, maxHeight: .infinity)
         .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
 
