@@ -12,12 +12,14 @@ struct PopEditor: View {
     @State private var text: String
     @State private var isStickyMode = false
     @FocusState private var isTextEditorFocused: Bool
+    let initialText: String // Store the input text
     let isDragging: Bool // Passed from parent for styling
 
     var onConfirm: (String) -> Void
     var onCancel: () -> Void
 
     init(text: String, isDragging: Bool, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
+        self.initialText = text
         self._text = State(initialValue: text)
         self.isDragging = isDragging
         self.onConfirm = onConfirm
@@ -41,6 +43,10 @@ struct PopEditor: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         isTextEditorFocused = true
                     }
+                }
+                .onChange(of: initialText) { _, newText in
+                    // Update text when the input parameter changes
+                    text = newText
                 }
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
