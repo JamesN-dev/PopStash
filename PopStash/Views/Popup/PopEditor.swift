@@ -25,19 +25,19 @@ struct PopEditor: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Clean text editor (no custom header - use window titlebar)
+            // Clean text editor - remove all background interference
             TextEditor(text: $text)
                 .font(.system(.body, design: .default))
                 .scrollContentBackground(.hidden)
                 .focused($isTextEditorFocused)
                 .padding(12)
-                .background(Color(NSColor.textBackgroundColor))
-                .onAppear{ DispatchQueue.main.async {
-                    isTextEditorFocused = true
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    DispatchQueue.main.async {
+                        isTextEditorFocused = true
                     }
                 }
                 
-            
             // Bottom action bar with character count
             HStack(spacing: 8) {
                 Text("\(text.count) characters")
@@ -60,29 +60,15 @@ struct PopEditor: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
+            .background(.regularMaterial)
         }
-        .background(Color(NSColor.windowBackgroundColor))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(
-                    isDragging ? Color.accentColor : Color(NSColor.separatorColor),
-                    lineWidth: isDragging ? 2 : 1
-                )
-        }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(.regularMaterial)
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(
                     isDragging ? Color.accentColor.opacity(0.8) : Color.clear,
                     lineWidth: 2
                 )
-        )
-        .shadow(
-            color: .black.opacity(0.15),
-            radius: 6,
-            x: 1,
-            y: 4
         )
         .frame(width: 400, height: 280)
         .animation(.easeInOut(duration: 0.2), value: isDragging)

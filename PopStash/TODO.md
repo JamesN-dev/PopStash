@@ -2,42 +2,74 @@
 
 ## RECENTLY COMPLETED / IN PROGRESS
 
+[x] PopEditor window styling fixed - Clean regularMaterial background matching ClipboardHistoryView
+[x] PopEditor titlebar added - "PopEditor" in sleek navigationTitle with toolbar styling  
+[x] TextEditor made editable - Removed conflicting backgrounds/overlays blocking interaction
+[x] Added input-monitoring entitlement for global Option+C shortcuts when app out of focus
 [x] Architectural guidance for window drag/activation separation completed
 [x] Correct modifier placement for window-level and view-level behaviors implemented
 [x] PopEditor drag logic clarified: content drag is separate from window drag
+[x] Fixed SwiftUI ShapeStyle.accent type errors by using .tint and Color.accentColor correctly
+[x] Removed confusing popover pin button - individual clipboard item pinning works perfectly
+[x] Fixed preferences navigation with NavigationPath and proper button action
+[x] MenuBarExtra positioning implemented with .defaultWindowPlacement
+[x] Hide item count badge when clipboard is empty (0 items)
+[x] **MAJOR FIX: PopEditor positioning issue resolved** - Removed .position(location) that was moving content off-screen
+[x] **PopEditor drag styling implemented** - Blue outline with responsive 1pt sensitivity and window-level dragging
+[x] **PopEditor content now displays properly** - Editor shows text instead of blank window
 
 ## HIGH PRIORITY
 
 ### Window & UI Critical Issues
 
-[ ] **Critical: Debug why notification does not immediatly focus**
+[ ] **#1 CRITICAL: Notification popup position bug after drag**
 
-- Status: Notification popup appears but it takes two clicks to open editor
-- Progress: Window-level and view-level activation modifiers now correctly separated; single-click focus should be possible with .allowsWindowActivationEvents()
-  [ ] **CRITICAL: PopEditor new draggable implementation drags the internal window while leaving outer window in tact.**
-- Status: PopEditor drag logic now clarified; content drag is intentional and separate from window drag. WindowDragGesture() used for window movement, custom drag for content.
-  [ ] **CRITICAL: Remove window minimize/close buttons from popup**
+- Status: NEW BUG DISCOVERED - After dragging PopEditor, next notification appears where bottom of editor was
+- Problem: Window positioning gets corrupted by drag operations, notifications spawn in wrong location
+- Impact: Core UX broken - popup appears in random locations after first drag
+- Solutions needed:
+  1. Always use persistent/fixed notification location (ignore drag state)
+  2. Reset window position when editor closes (snap back behavior)
+  3. Decide: Can notifications trigger while editor is open? (prevent multiple popups)
+
+[ ] **#1 HIGH: Add sticky notes functionality to PopEditor**
+
+- Status: NEW FEATURE REQUEST - Add option to make PopEditor persist like Mac Notes
+- Requirement: Toggle button or menu option to keep editor open after save/cancel
+- Impact: Enhanced workflow for users who want persistent text editing
+- Implementation: Add sticky mode state, modify close behavior
+
+[ ] **#1 PROBLEM: X close button not working in clipboardview**
+
+[x] **Critical: Notification popup now focuses correctly**
+
+- Status: Window-level and view-level activation modifiers now correctly separated; single-click focus now works
+- Next: Fine-tune notification popup positioning to match native top-right style
+
+[x] **CRITICAL: PopEditor positioning and functionality restored**
+
+- Status: FIXED - Removed internal .position(location) and drag logic that was positioning content off-screen
+- Status: FIXED - PopEditor now displays text content properly instead of blank window
+- Status: FIXED - Window-level dragging works with responsive blue outline styling
+- Implementation: Drag state propagated from NotificationPopupOverlay -> NotificationPopupView -> PopEditor
+
+[ ] **CRITICAL: Remove window minimize/close buttons from popup**
+
 - Status: Tried `.plain`, `.hiddenTitleBar`, `HiddenTitleBarWindowStyle()` - all still show buttons
 - Impact: Makes popup look unprofessional and cluttered
 - Next: Try custom NSWindow approach or windowToolbarStyle modifiers
-- [ ] **CRITICAL: Remove window minimize/close buttons from popup**
 
-  - Status: Tried `.plain`, `.hiddenTitleBar`, `HiddenTitleBarWindowStyle()` - all still show buttons
-  - Impact: Makes popup look unprofessional and cluttered
-  - Next: Try custom NSWindow approach or windowToolbarStyle modifiers
+[ ] **HIGH: Add live clipboard history update while typing**
 
-- [ ] **HIGH: Position popup more to the left**
+- Status: Currently only updates on confirm/cancel
+- Impact: Poor UX - user can't see real-time preview of changes
+- Requirement: Update clipboard history as user types in editor
+- Implementation: Bind editor text to history item in real-time
 
-  - Status: Currently positioned too far right despite padding adjustments
-  - Current calc: `displayBounds.maxX - size.width - 80`
-  - Impact: Popup appears off-screen or awkwardly positioned
-  - Next: Debug coordinate system, try fixed positioning
+[x] **Window mode switching deferred**
 
-- [ ] **HIGH: Add live clipboard history update while typing**
-  - Status: Currently only updates on confirm/cancel
-  - Impact: Poor UX - user can't see real-time preview of changes
-  - Requirement: Update clipboard history as user types in editor
-  - Implementation: Bind editor text to history item in real-time
+- Status: All dynamic window mode wiring removed from PopStashApp.swift; only default sizing is active for now
+- Next: Revisit compact/resizable modes and reconnect Preferences logic in a future update
 
 ### Core Functionality Fixes
 
@@ -100,6 +132,13 @@
 ---
 
 ## IMPLEMENTATION NOTES
+
+### Window Position Fix Strategy
+
+1. **Persistent Location**: Store fixed notification position, ignore drag state
+2. **Reset on Close**: Snap window position back when editor closes
+3. **Multiple Popups**: Decide if notifications can spawn while editor is open
+4. **Sticky Mode**: Add toggle for persistent editor like Mac Notes
 
 ### Window Button Removal Approaches
 

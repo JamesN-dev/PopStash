@@ -93,23 +93,33 @@ struct PopStashApp: App {
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            // Position at top-right corner, with extra offset for native look
+            // Position at top-right corner (macOS coordinates: origin at bottom-left)
             let position = CGPoint(
-                x: displayBounds.maxX - size.width - 20,
-                y: displayBounds.minY + 40
+                x: displayBounds.maxX - size.width - 20,  // Right edge minus width
+                y: displayBounds.maxY - size.height - 20   // Top edge minus height (macOS coords)
             )
             return WindowPlacement(position, size: size)
         }
 
-        Window("Text Editor", id: "textEditor") {
-            PopEditor(
-                text: "",
-                isDragging: false,
-                onConfirm: { _ in },
-                onCancel: { }
-            )
+        Window("PopEditor", id: "textEditor") {
+            NavigationStack {
+                PopEditor(
+                    text: "",
+                    isDragging: false,
+                    onConfirm: { _ in },
+                    onCancel: { }
+                )
+                .navigationTitle("PopEditor")
+                .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        Spacer()
+                            .frame(width: 16)
+                    }
+                }
+                .toolbarBackground(.regularMaterial, for: .windowToolbar)
+            }
         }
-        .windowStyle(.hiddenTitleBar)
+        .windowStyle(.automatic)
         .windowResizability(.contentSize)
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
