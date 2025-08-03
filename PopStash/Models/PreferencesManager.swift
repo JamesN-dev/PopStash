@@ -12,6 +12,14 @@ import SwiftUI
 /// Handles all app settings and user preferences
 @Observable
 final class PreferencesManager {
+    // MARK: - Window Mode Preference
+    enum WindowMode: String, Codable, CaseIterable {
+        case compact
+        case expanded
+        case resizable
+    }
+
+    var windowMode: WindowMode = .compact
 
     // MARK: - Hotkey Preferences
     var useOptionCHotkey: Bool = true
@@ -62,7 +70,8 @@ final class PreferencesManager {
             enableKeyboardShortcuts: enableKeyboardShortcuts,
             clearHistoryOnQuit: clearHistoryOnQuit,
             enableAnalytics: enableAnalytics,
-            enableHoverEffect: enableHoverEffect
+            enableHoverEffect: enableHoverEffect,
+            windowMode: windowMode
         )
 
         if let encoded = try? JSONEncoder().encode(preferences) {
@@ -91,6 +100,7 @@ final class PreferencesManager {
         clearHistoryOnQuit = preferences.clearHistoryOnQuit
         enableAnalytics = preferences.enableAnalytics
         enableHoverEffect = preferences.enableHoverEffect
+        windowMode = preferences.windowMode
     }
 
     // MARK: - Actions
@@ -130,10 +140,14 @@ private struct PreferencesData: Codable {
     let clearHistoryOnQuit: Bool
     let enableAnalytics: Bool
     let enableHoverEffect: Bool
+    let windowMode: PreferencesManager.WindowMode
 }
 
 // MARK: - Convenience Extensions
 extension PreferencesManager {
+    var windowModeOptions: [WindowMode] {
+        WindowMode.allCases
+    }
     var popupDismissTimeOptions: [Double] {
         [3.0, 5.0, 7.0, 10.0, 15.0]
     }

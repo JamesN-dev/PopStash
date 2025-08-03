@@ -13,24 +13,9 @@ struct NotificationPopupView: View {
     @Bindable var popupManager: NotificationPopupManager
     @FocusState private var isTextEditorFocused: Bool
     @Environment(\.dismiss) private var dismiss
-
-    // TODO: macOS 26.0+ - Implement smooth window morphing with windowResizeAnchor
-    // Replace separate notification/editor windows with single morphing window
-    //
-    // @State private var windowSize: CGSize = CGSize(width: 340, height: 72)
-    //
-    // .frame(width: windowSize.width, height: windowSize.height)
-    // .windowResizeAnchor(.topTrailing) // Anchor to top-right corner
-    // .onChange(of: popupManager.isExpanded) { _, expanded in
-    //     withAnimation(.easeInOut(duration: 0.3)) {
-    //         windowSize = expanded ?
-    //             CGSize(width: 400, height: 280) :  // Editor size
-    //             CGSize(width: 340, height: 72)    // Notification size
-    //     }
-    // }
-    //
-    // This will create a smooth morphing transition from notification → editor
-    // instead of opening separate windows. Much more elegant UX.
+    
+    // Dynamic window sizing for smooth morphing
+    @State private var windowSize: CGSize = CGSize(width: 340, height: 72)
 
     var body: some View {
         Group {
@@ -52,6 +37,14 @@ struct NotificationPopupView: View {
             // Auto-focus the popup when it appears so first click works
             isTextEditorFocused = true
         }
+        .onChange(of: popupManager.isExpanded) { _, expanded in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                windowSize = expanded ?
+                    CGSize(width: 400, height: 280) :  // Editor size
+                    CGSize(width: 340, height: 72)    // Notification size
+            }
+        }
+        .frame(width: windowSize.width, height: windowSize.height)
         // Use proper SwiftUI material background instead of glassEffect
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }

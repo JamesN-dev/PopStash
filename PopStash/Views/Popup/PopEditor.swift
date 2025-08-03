@@ -13,7 +13,7 @@ struct PopEditor: View {
     @FocusState private var isTextEditorFocused: Bool
     
     // Drag state management
-    @State private var location = CGPoint(x: 200, y: 200)
+    @State private var location = CGPoint(x: NSScreen.main?.visibleFrame.maxX ?? 1400 - 420, y: NSScreen.main?.visibleFrame.minY ?? 0 + 50)
     @GestureState private var startLocation: CGPoint?
     @State private var isDragging = false
     
@@ -108,11 +108,11 @@ struct PopEditor: View {
                     lineWidth: isDragging ? 2 : 1
                 )
         }
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .shadow(
-            color: .black.opacity(isDragging ? 0.3 : 0.2),
-            radius: isDragging ? 16 : 12,
-            x: 0,
+            color: .black.opacity(0.15),
+            radius: isDragging ? 8 : 6,
+            x: isDragging ? 2 : 1,
             y: isDragging ? 6 : 4
         )
         .frame(width: 400, height: 280)
@@ -120,4 +120,5 @@ struct PopEditor: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isDragging)
         .scaleEffect(isDragging ? 1.02 : 1.0)
     }
+    
 }
