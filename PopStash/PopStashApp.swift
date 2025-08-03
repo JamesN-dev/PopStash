@@ -111,18 +111,7 @@ struct PopStashApp: App {
         .windowLevel(.floating)
         .windowBackgroundDragBehavior(.disabled)
         .windowResizability(.contentMinSize)
-        .restorationBehavior(.disabled)  // Disable saving/restoring this window's state
-        .defaultWindowPlacement { windowProxy, context in
-            let displayBounds = context.defaultDisplay.visibleRect
-            let size = windowProxy.sizeThatFits(.unspecified)
-            // Always position at top-right corner, ignore drag state
-            let position = CGPoint(
-                x: displayBounds.maxX - size.width - 20,
-                y: displayBounds.minY + 20
-            )
-            logger.debug("Notification window placement: \(position), size: \(size)")
-            return WindowPlacement(position, size: size)
-        }
+        .restorationBehavior(.disabled)
 
         Window("PopEditor", id: "textEditor") {
             EditorWindowContent(popupManager: clipboardManager.popupManager)

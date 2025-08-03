@@ -28,37 +28,48 @@ final class WindowManager {
         // Force close any existing notification window first
         dismissWindow?("notification")
         
-        // Small delay to ensure the window is properly closed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        // Small delay to ensure the window is properly closed before opening
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.openWindow?("notification")
             
-            // Force position the window after opening
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.forcePositionNotificationWindow()
+            // Position and show the window after it's created
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.positionAndShowNotificationWindow()
             }
         }
     }
     
-    private func forcePositionNotificationWindow() {
-        // Find the notification window and force its position
+    private func positionAndShowNotificationWindow() {
+        // Find the notification window
         for window in NSApp.windows {
-            if window.title == "Notification" || window.identifier?.rawValue == "notification" {
-                logger.debug("Found notification window, forcing position to top-right")
+            if window.title == "Notification" {
+                logger.debug("Found notification window, positioning and showing")
                 
                 // Get the main screen bounds
-                guard let screen = NSScreen.main else { return }
+                guard let screen = NSScreen.main else { 
+                    logger.error("Could not get main screen")
+                    return 
+                }
                 let screenFrame = screen.visibleFrame
-                let windowSize = window.frame.size
                 
-                // Calculate top-right position
+                // Set a reasonable size first
+                let windowSize = NSSize(width: 360, height: 80)
+                
+                // Calculate top-right position (AppKit coordinates: bottom-left origin)
                 let targetOrigin = NSPoint(
                     x: screenFrame.maxX - windowSize.width - 20,
-                    y: screenFrame.maxY - windowSize.height - 20
+                    y: screenFrame.maxY - windowSize.height - 60  // Account for menu bar
                 )
                 
-                // Force set the window position
-                window.setFrameOrigin(targetOrigin)
-                logger.debug("Forced notification window to position: \(targetOrigin)")
+                // Set size and position
+                window.setFrame(NSRect(origin: targetOrigin, size: windowSize), display: true)
+                
+                // Ensure window is visible and on top
+                window.makeKeyAndOrderFront(nil)
+                window.level = .floating
+                window.orderFrontRegardless()
+                
+                logger.debug("Positioned notification window at: \(targetOrigin), size: \(windowSize)")
                 break
             }
         }
