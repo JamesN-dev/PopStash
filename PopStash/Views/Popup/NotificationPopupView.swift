@@ -13,9 +13,15 @@ struct NotificationPopupView: View {
     @Bindable var popupManager: NotificationPopupManager
     @FocusState private var isTextEditorFocused: Bool
     @Environment(\.dismiss) private var dismiss
+    let isDragging: Bool // Received from parent overlay
     
     // Dynamic window sizing for smooth morphing
     @State private var windowSize: CGSize = CGSize(width: 340, height: 72)
+    
+    init(popupManager: NotificationPopupManager, isDragging: Bool) {
+        self.popupManager = popupManager
+        self.isDragging = isDragging
+    }
 
     var body: some View {
         Group {
@@ -97,6 +103,7 @@ struct NotificationPopupView: View {
     private var expandedEditor: some View {
         PopEditor(
             text: popupManager.currentText,
+            isDragging: isDragging, // Pass drag state for styling
             onConfirm: { plainText in
                 popupManager.confirmEdit(plainText)
                 dismiss()
@@ -121,15 +128,29 @@ struct NotificationPopupView: View {
 // This wrapper ensures the popup appears in a floating context
 struct NotificationPopupOverlay: View {
     @Bindable var popupManager: NotificationPopupManager
+    @State private var isDragging = false // Track drag state for styling
 
     var body: some View {
         if popupManager.isShowing {
-            NotificationPopupView(popupManager: popupManager)
+            NotificationPopupView(popupManager: popupManager, isDragging: isDragging)
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.9)),
                     removal: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.95))
                 ))
-                .gesture(WindowDragGesture())
+                .gesture(
+                    // More sensitive drag gesture for styling effects
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { _ in
+                            isDragging = true
+                        }
+                        .onEnded { _ in
+                            // Small delay before removing blue outline
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isDragging = false
+                            }
+                        }
+                        .simultaneously(with: WindowDragGesture())
+                )
         }
     }
 

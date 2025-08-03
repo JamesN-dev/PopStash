@@ -104,6 +104,7 @@ struct PopStashApp: App {
         Window("Text Editor", id: "textEditor") {
             PopEditor(
                 text: "",
+                isDragging: false,
                 onConfirm: { _ in },
                 onCancel: { }
             )

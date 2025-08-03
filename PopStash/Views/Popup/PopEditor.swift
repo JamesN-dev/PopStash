@@ -11,59 +11,21 @@ import SwiftUI
 struct PopEditor: View {
     @State private var text: String
     @FocusState private var isTextEditorFocused: Bool
-    
-    // Drag state management
-    @State private var location = CGPoint(x: NSScreen.main?.visibleFrame.maxX ?? 1400 - 420, y: NSScreen.main?.visibleFrame.minY ?? 0 + 50)
-    @GestureState private var startLocation: CGPoint?
-    @State private var isDragging = false
+    let isDragging: Bool // Passed from parent for styling
     
     var onConfirm: (String) -> Void
     var onCancel: () -> Void
     
-    init(text: String, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
+    init(text: String, isDragging: Bool, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
         self._text = State(initialValue: text)
+        self.isDragging = isDragging
         self.onConfirm = onConfirm
         self.onCancel = onCancel
     }
 
-    var drag: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                self.location = value.location
-                isDragging = true
-            }
-            .onEnded { value in
-                isDragging = false
-            }
-            .updating(self.$startLocation) { value, startLocation, transaction in
-                startLocation = startLocation ?? location
-            }
-    }
-
     var body: some View {
         VStack(spacing: 0) {
-            // Header with title and close button
-            HStack {
-                Text("Text Editor")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                Button(action: onCancel) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
-            .contentShape(Rectangle()) // Make entire header draggable
-            .gesture(drag)
-            
-            // Clean text editor
+            // Clean text editor (no custom header - use window titlebar)
             TextEditor(text: $text)
                 .font(.system(.body, design: .default))
                 .scrollContentBackground(.hidden)
@@ -109,16 +71,21 @@ struct PopEditor: View {
                 )
         }
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    isDragging ? Color.accentColor.opacity(0.8) : Color.clear,
+                    lineWidth: 2
+                )
+        )
         .shadow(
             color: .black.opacity(0.15),
-            radius: isDragging ? 8 : 6,
-            x: isDragging ? 2 : 1,
-            y: isDragging ? 6 : 4
+            radius: 6,
+            x: 1,
+            y: 4
         )
         .frame(width: 400, height: 280)
-        .position(location)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isDragging)
-        .scaleEffect(isDragging ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
     
 }
