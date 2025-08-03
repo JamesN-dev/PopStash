@@ -69,6 +69,10 @@ struct NotificationPopupView: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(PopButtonStyle())
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.accentColor, lineWidth: isDragging ? 2 : 0)
+        )
         .allowsWindowActivationEvents()
     }
 
@@ -109,7 +113,15 @@ struct NotificationPopupOverlay: View {
                         .simultaneously(with: WindowDragGesture())
                 )
                 .onAppear {
-                    logger.debug("NotificationPopupOverlay: popup appeared")
+                    logger.debug("NotificationPopupOverlay: popup appeared - isShowing: \(popupManager.isShowing)")
+                }
+        } else {
+            // Invisible placeholder to ensure window exists
+            Color.clear
+                .frame(width: 340, height: 72)
+                .allowsHitTesting(false)
+                .onAppear {
+                    logger.debug("NotificationPopupOverlay: placeholder appeared - isShowing: \(popupManager.isShowing)")
                 }
         }
     }
