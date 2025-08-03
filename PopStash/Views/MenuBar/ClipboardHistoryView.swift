@@ -185,11 +185,6 @@ struct ClipboardHistoryView: View {
                             }
                             .tag(item.id)
                             .contextMenu {
-                                Button(action: { /* Quick Look will go here */ }) {
-                                    Label("Quick Look", systemImage: "eye")
-                                }
-                                .keyboardShortcut("q", modifiers: .option)
-
                                 Button(action: { clipboardManager.togglePin(for: item) }) {
                                     Label(item.isPinned ? "Unpin" : "Pin", systemImage: "pin")
                                 }
