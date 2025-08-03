@@ -14,7 +14,7 @@ final class ClipboardManager {
     var history: [ClipboardItem] = [] {
         didSet { saveHistory() }
     }
-    var popupManager = NotificationPopupManager()
+    var popupManager: NotificationPopupManager
     
     // Clipboard monitoring
     private var lastChangeCount: Int = 0
@@ -28,6 +28,8 @@ final class ClipboardManager {
     }
 
     init() {
+        // Initialize popupManager without back-reference first
+        self.popupManager = NotificationPopupManager()
         loadHistory()
         setupKeyboardShortcuts()
         startClipboardMonitoring()

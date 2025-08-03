@@ -1,6 +1,20 @@
 // PopStashApp.swift
+// Allow direct interpolation of CGSize in Logger statements
+extension CGSize: @retroactive CustomStringConvertible {
+    public var description: String {
+        "(\(width), \(height))"
+    }
+}
 import SwiftUI
 import OSLog
+// Allow direct interpolation of CGPoint in Logger statements
+import CoreGraphics
+
+extension CGPoint: @retroactive CustomStringConvertible {
+    public var description: String {
+        "(\(x), \(y))"
+    }
+}
 
 private let logger = Logger(subsystem: "com.popstash.app", category: "main")
 
@@ -14,7 +28,7 @@ struct PopStashApp: App {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
     @Environment(\.dismiss) private var dismiss
-    private let preferencesManager = PreferencesManager()
+    @State private var preferencesManager = PreferencesManager()
 
     var body: some Scene {
         // MenuBarExtra with NavigationStack - (clipboard and preferences)
@@ -76,9 +90,28 @@ struct PopStashApp: App {
         }
         .onChange(of: clipboardManager.popupManager.isShowing) { oldValue, isShowing in
             if isShowing {
-                openWindow(id: "notification")
-            } else {
+                // Reset position by dismissing first, then reopening after delay
+                logger.debug("🔄 Resetting popup position - dismissing window")
                 dismissWindow(id: "notification")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    logger.debug("🔄 Reopening window after position reset")
+                    openWindow(id: "notification")
+                }
+            } else {
+                // When popup is dismissed, reset position for next time
+                logger.debug("❌ Popup dismissed - resetting position for next popup")
+                dismissWindow(id: "notification")
+            }
+        }
+        .onChange(of: clipboardManager.popupManager.isExpanded) { oldValue, isExpanded in
+            if isExpanded {
+                // When popup expands to editor, reset window position immediately
+                logger.debug("📝 Popup expanded to editor - resetting position")
+                dismissWindow(id: "notification")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    logger.debug("📝 Reopening after editor expansion")
+                    openWindow(id: "notification")
+                }
             }
         }
         // Popup notification window
@@ -89,15 +122,17 @@ struct PopStashApp: App {
         .windowStyle(.plain)
         .windowLevel(.floating)
         .windowBackgroundDragBehavior(.enabled)
-        .windowResizability(preferencesManager.windowMode == .resizable ? .contentSize : .contentMinSize)
+        .windowResizability(.contentMinSize)
+        .restorationBehavior(.disabled)  // Disable saving/restoring this window's state
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            // Position at top-right corner (macOS coordinates: origin at bottom-left)
+            // Always position at top-right corner, ignore drag state
             let position = CGPoint(
-                x: displayBounds.maxX - size.width - 20,  // Right edge minus width
-                y: displayBounds.maxY - size.height - 20   // Top edge minus height (macOS coords)
+                x: displayBounds.maxX - size.width - 20,
+                y: displayBounds.minY + 20
             )
+            logger.debug("Notification window placement: \(position), size: \(size)")
             return WindowPlacement(position, size: size)
         }
 

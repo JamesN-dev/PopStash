@@ -14,10 +14,10 @@ struct NotificationPopupView: View {
     @FocusState private var isTextEditorFocused: Bool
     @Environment(\.dismiss) private var dismiss
     let isDragging: Bool // Received from parent overlay
-    
+
     // Dynamic window sizing for smooth morphing
     @State private var windowSize: CGSize = CGSize(width: 340, height: 72)
-    
+
     init(popupManager: NotificationPopupManager, isDragging: Bool) {
         self.popupManager = popupManager
         self.isDragging = isDragging
@@ -103,7 +103,7 @@ struct NotificationPopupView: View {
     private var expandedEditor: some View {
         PopEditor(
             text: popupManager.currentText,
-            isDragging: isDragging, // Pass drag state for styling
+            isDragging: isDragging,
             onConfirm: { plainText in
                 popupManager.confirmEdit(plainText)
                 dismiss()
