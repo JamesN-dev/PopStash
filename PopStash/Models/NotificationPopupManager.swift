@@ -1,5 +1,5 @@
 //
-//  NotificationPopupManager 2.swift
+//  NotificationPopupManager.swift
 //  PopStash
 //
 //  Created by atetraxx on 8/2/25.
@@ -18,9 +18,22 @@ final class NotificationPopupManager {
     var isExpanded = false
     var currentText = ""
     
+    // Weak reference to parent ClipboardManager to avoid retain cycle
+    private weak var clipboardManager: ClipboardManager?
+    
     private var onConfirmCallback: ((String) -> Void)?
     private var onCancelCallback: (() -> Void)?
     private var autoDismissTimer: Timer?
+    
+    // Initialize with reference to parent ClipboardManager
+    init(clipboardManager: ClipboardManager? = nil) {
+        self.clipboardManager = clipboardManager
+    }
+    
+    // Set the clipboard manager reference after initialization
+    func setClipboardManager(_ manager: ClipboardManager) {
+        self.clipboardManager = manager
+    }
     
     func showPopup(with text: String, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
         // Reset state before showing new popup
@@ -36,7 +49,6 @@ final class NotificationPopupManager {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             isShowing = true
         }
-        
         
         startAutoDismissTimer()
     }

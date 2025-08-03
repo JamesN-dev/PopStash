@@ -10,12 +10,13 @@ import SwiftUI
 /// Sleek plain text editor for clipboard content
 struct PopEditor: View {
     @State private var text: String
+    @State private var isStickyMode = false
     @FocusState private var isTextEditorFocused: Bool
     let isDragging: Bool // Passed from parent for styling
-    
+
     var onConfirm: (String) -> Void
     var onCancel: () -> Void
-    
+
     init(text: String, isDragging: Bool, onConfirm: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
         self._text = State(initialValue: text)
         self.isDragging = isDragging
@@ -37,22 +38,44 @@ struct PopEditor: View {
                         isTextEditorFocused = true
                     }
                 }
-                
+
             // Bottom action bar with character count
             HStack(spacing: 8) {
                 Text("\(text.count) characters")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
+
+                // Sticky mode toggle
+                Button(action: { isStickyMode.toggle() }) {
+                    Image(systemName: isStickyMode ? "pin.fill" : "pin")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(isStickyMode ? Color.accentColor : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help(isStickyMode ? "Disable sticky mode" : "Enable sticky mode - keep editor open after save")
+
                 Spacer()
-                
-                Button("Cancel", action: onCancel)
-                    .keyboardShortcut(.escape, modifiers: [])
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                
+
+                Button("Cancel") {
+                    if isStickyMode {
+                        // In sticky mode, just clear the text instead of closing
+                        text = ""
+                    } else {
+                        onCancel()
+                    }
+                }
+                .keyboardShortcut(.escape, modifiers: [])
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
                 Button("Save to Clipboard") {
                     onConfirm(text)
+                    if !isStickyMode {
+                        // Only close if not in sticky mode
+                    } else {
+                        // In sticky mode, just clear for next input
+                        text = ""
+                    }
                 }
                 .keyboardShortcut(.return, modifiers: [.command])
                 .buttonStyle(.borderedProminent)
@@ -73,5 +96,5 @@ struct PopEditor: View {
         .frame(width: 400, height: 280)
         .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
-    
+
 }

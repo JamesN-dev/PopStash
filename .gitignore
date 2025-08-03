@@ -127,8 +127,9 @@ buildServer.json
 .crush/
 .vscode/
 .zed/
+*.md
 AGENTS.md
 CRUSH.md
 MVP.md
 MENUBAREXTRA.md
-*.md
+
