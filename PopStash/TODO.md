@@ -2,25 +2,24 @@
 
 ## RECENTLY COMPLETED / IN PROGRESS
 
-- [x] Custom PopButtonStyle hover effect refactored for best SwiftUI/context7 practices
-- [x] PopButtonStyle now respects system/user hover effect settings via isHoverEffectEnabled
-- [x] NotificationPopupView refactored to use Button with PopButtonStyle
-- [x] Searched for other onTapGesture instances; plan to refactor ClipboardHistoryView to Button with PopButtonStyle
-- [x] Reviewed AGENTS.md, CRUSH.md, and MVP.md for accuracy; confirmed documentation and architecture are up-to-date and match codebase
-- [x] Add hover effect toggle to preferences UI and wire to PopButtonStyle
+[x] Architectural guidance for window drag/activation separation completed
+[x] Correct modifier placement for window-level and view-level behaviors implemented
+[x] PopEditor drag logic clarified: content drag is separate from window drag
 
 ## HIGH PRIORITY
 
 ### Window & UI Critical Issues
 
-- [ ] **Critical: Debug why notification does not immediatly focus**
+[ ] **Critical: Debug why notification does not immediatly focus**
 
-  - Status: Notification popup appears but it takes two clicks to open editork
-
-- [ ] **CRITICAL: PopEditor new draggable implementation drags the internal window while leaving outer window in tact.**
-
-  - When notification is clicked, the popeditor window is still same size and needed expanded to fit internal editor. .contentSize?
-
+- Status: Notification popup appears but it takes two clicks to open editor
+- Progress: Window-level and view-level activation modifiers now correctly separated; single-click focus should be possible with .allowsWindowActivationEvents()
+  [ ] **CRITICAL: PopEditor new draggable implementation drags the internal window while leaving outer window in tact.**
+- Status: PopEditor drag logic now clarified; content drag is intentional and separate from window drag. WindowDragGesture() used for window movement, custom drag for content.
+  [ ] **CRITICAL: Remove window minimize/close buttons from popup**
+- Status: Tried `.plain`, `.hiddenTitleBar`, `HiddenTitleBarWindowStyle()` - all still show buttons
+- Impact: Makes popup look unprofessional and cluttered
+- Next: Try custom NSWindow approach or windowToolbarStyle modifiers
 - [ ] **CRITICAL: Remove window minimize/close buttons from popup**
 
   - Status: Tried `.plain`, `.hiddenTitleBar`, `HiddenTitleBarWindowStyle()` - all still show buttons

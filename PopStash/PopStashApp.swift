@@ -12,18 +12,31 @@ struct PopStashApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
-    
+    @Environment(\.dismiss) private var dismiss
+    private let preferencesManager = PreferencesManager()
+
     var body: some Scene {
+        // MenuBarExtra with NavigationStack - contains both clipboard and preferences
         MenuBarExtra("Clipboard History", systemImage: "doc.on.clipboard") {
-            ClipboardHistoryView(openPreferences: {
-                openWindow(id: "settings")
-            })
+            NavigationStack {
+                ClipboardHistoryView(
+                    closePopover: { }, // No need to close - we're navigating within same popover
+                    openPreferences: { } // Navigation handled by NavigationLink
+                )
                 .environment(clipboardManager)
-                .frame(minWidth: 420, maxWidth: .infinity, minHeight: 500, maxHeight: .infinity)
-                .task {
-                    appDelegate.setClipboardManager(clipboardManager)
-                    logger.info("Clipboard manager setup complete")
+                .environment(preferencesManager)
+                .navigationDestination(for: String.self) { destination in
+                    if destination == "preferences" {
+                        PreferencesView()
+                            .environment(preferencesManager)
+                    }
                 }
+            }
+            .frame(minWidth: 420, maxWidth: 500, minHeight: 500, maxHeight: 600)
+            .task {
+                appDelegate.setClipboardManager(clipboardManager)
+                logger.info("Clipboard manager setup complete")
+            }
         }
         .menuBarExtraStyle(.window)
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -44,34 +57,26 @@ struct PopStashApp: App {
             } else {
                 dismissWindow(id: "notification")
             }
-        }
-        
-        Window("Preferences", id: "settings") {
-            PreferencesView()
-                .environment(PreferencesManager())
-        }
-        .windowResizability(.contentSize)
-        
-        // Popup notification window
+        }        // Popup notification window
         Window("Notification", id: "notification") {
             NotificationPopupOverlay(popupManager: clipboardManager.popupManager)
+                .environment(preferencesManager)
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
+        .windowStyle(.plain)
         .windowLevel(.floating)
-        .windowResizability(.contentSize)
+        .windowBackgroundDragBehavior(.enabled)
+        .windowResizability(.contentMinSize)
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            
             // Position at top-right corner
             let position = CGPoint(
                 x: displayBounds.maxX - size.width - 50,  // More left padding
                 y: displayBounds.minY + 80   // More top padding
             )
-            
             return WindowPlacement(position, size: size)
         }
-        
+
         Window("Text Editor", id: "textEditor") {
             PopEditor(
                 text: "",
@@ -84,13 +89,13 @@ struct PopStashApp: App {
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            
+
             // Position in center of screen
             let position = CGPoint(
                 x: displayBounds.midX - (size.width / 2),
                 y: displayBounds.midY - (size.height / 2)
             )
-            
+
             return WindowPlacement(position, size: size)
         }
         .windowLevel(.floating)
