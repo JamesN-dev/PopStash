@@ -1,27 +1,26 @@
 // ClipboardHistoryView.swift
 import SwiftUI
 
-// This is the dedicated View for a single row in the list.
+// Clipboard row view for individual items
 struct ClipboardRowView: View {
     let item: ClipboardItem
     let index: Int
 
     var body: some View {
-        HStack(spacing: 10) {
-            // Use a simpler approach for the icon
+        HStack(spacing: 12) {
             Image(systemName: "doc")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 24, height: 24)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.tint)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 switch item.content {
                 case .text(let text):
                     Text(text)
                         .lineLimit(2)
                         .truncationMode(.tail)
-                        .font(.system(size: 12))
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(.primary)
                 case .image:
                     if let nsImage = item.image {
@@ -30,7 +29,7 @@ struct ClipboardRowView: View {
                             .scaledToFill()
                             .frame(width: 50, height: 28)
                             .clipped()
-                            .cornerRadius(4)
+                            .cornerRadius(6)
                     } else {
                         Text("Invalid Image")
                             .foregroundColor(.secondary)
@@ -45,26 +44,34 @@ struct ClipboardRowView: View {
             if index < 9 {
                 Text("⌥\(index + 1)")
                     .foregroundColor(.secondary)
-                    .font(.system(size: 11))
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
             }
 
             if item.isPinned {
                 Image(systemName: "pin.fill")
-                    .foregroundColor(Color(NSColor.controlAccentColor))
-                    .font(.system(size: 11))
+                    .foregroundStyle(.tint)
+                    .font(.system(size: 12, weight: .medium))
                     .padding(.leading, 4)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.accentColor.opacity(item.isPinned ? 0.13 : 0.07))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(item.isPinned ? Color.accentColor : Color.clear, lineWidth: item.isPinned ? 1.5 : 0)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.previewText)
+        .accessibilityHint(item.isPinned ? "Pinned clipboard item" : "Clipboard item")
     }
 }
 
-// This is the main view for the popover.
+// Clipboard history view for MenuBarExtra
 struct ClipboardHistoryView: View {
     @Environment(ClipboardManager.self) private var clipboardManager
     @Environment(PreferencesManager.self) private var preferencesManager
@@ -76,6 +83,80 @@ struct ClipboardHistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Clipboard toolbar
+            HStack(spacing: 12) {
+                // Title and count
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.on.clipboard")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.tint)
+                        .symbolEffect(.pulse.wholeSymbol, options: .speed(0.8).repeat(.continuous))
+
+                    Text("PopStash")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary);                    if preferencesManager.showItemCount && clipboardManager.history.count > 0 {
+                        Text("\(clipboardManager.history.count)")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.tint)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.regularMaterial, in: Capsule())
+                            .overlay(Capsule().stroke(.tint.opacity(0.3), lineWidth: 0.5))
+                    }
+                }
+
+                Spacer()
+
+
+                Spacer()
+
+                // Clipboard toolbar buttons
+                HStack(spacing: 8) {
+                    // Preferences button
+                    Button(action: { openPreferences() }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 28, height: 28)
+                    .background(.regularMaterial, in: Circle())
+                    .focusEffectDisabled()
+                    .help("Preferences")
+
+                    // Analytics button
+                    Button(action: { /* TODO: Navigate to analytics view */ }) {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 28, height: 28)
+                    .background(.regularMaterial, in: Circle())
+                    .focusEffectDisabled()
+                    .help("Analytics")
+
+                    // Close button
+                    Button(action: { closePopover() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 28, height: 28)
+                    .background(.regularMaterial, in: Circle())
+                    .focusEffectDisabled()
+                    .help("Close")
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .background(.regularMaterial, ignoresSafeAreaEdges: .horizontal)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("PopStash toolbar")
+
+
+            // Clipboard search bar
             TextField("Search clipboard...", text: $searchText)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal, 10)
@@ -108,7 +189,7 @@ struct ClipboardHistoryView: View {
                                     Label("Quick Look", systemImage: "eye")
                                 }
                                 .keyboardShortcut("q", modifiers: .option)
-                                Divider()
+
                                 Button(action: { clipboardManager.togglePin(for: item) }) {
                                     Label(item.isPinned ? "Unpin" : "Pin", systemImage: "pin")
                                 }
@@ -117,6 +198,9 @@ struct ClipboardHistoryView: View {
                                 }
                             }
                             .buttonStyle(PopButtonStyle())
+                            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: clipboardManager.history)
+                            .accessibilityLabel(item.previewText)
+                            .accessibilityHint(item.isPinned ? "Pinned clipboard item" : "Clipboard item")
                         }
                     }
                     .padding(.horizontal, 8)
@@ -128,20 +212,11 @@ struct ClipboardHistoryView: View {
             Spacer(minLength: 0)
 
             VStack(spacing: 0) {
-                Divider()
+
                 HStack {
                     Text("\(clipboardManager.history.count) items")
                         .font(.caption)
                     Spacer()
-                    Button("Preferences…") {
-                        // Navigation handled by NavigationLink - no need for manual positioning
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .background(
-                        NavigationLink("", value: "preferences")
-                            .opacity(0)
-                    )
-                        .font(.system(size: 12))
                     Button("Clear") { clipboardManager.clearHistory() }
                         .font(.system(size: 12))
                     Button("Quit") { NSApplication.shared.terminate(nil) }

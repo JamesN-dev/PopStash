@@ -9,6 +9,7 @@ struct PopStashApp: App {
     // This adapter ensures our AppDelegate runs on launch.
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var clipboardManager = ClipboardManager()
+    @State private var navigationPath = NavigationPath()
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
@@ -16,12 +17,14 @@ struct PopStashApp: App {
     private let preferencesManager = PreferencesManager()
 
     var body: some Scene {
-        // MenuBarExtra with NavigationStack - contains both clipboard and preferences
-        MenuBarExtra("Clipboard History", systemImage: "doc.on.clipboard") {
-            NavigationStack {
+        // MenuBarExtra with NavigationStack - (clipboard and preferences)
+        MenuBarExtra {
+            NavigationStack(path: $navigationPath) {
                 ClipboardHistoryView(
-                    closePopover: { }, // No need to close - we're navigating within same popover
-                    openPreferences: { } // Navigation handled by NavigationLink
+                    closePopover: { /* Custom close logic, respects Pin state */ },
+                    openPreferences: {
+                        navigationPath.append("preferences")
+                    }
                 )
                 .environment(clipboardManager)
                 .environment(preferencesManager)
@@ -32,13 +35,33 @@ struct PopStashApp: App {
                     }
                 }
             }
-            .frame(minWidth: 420, maxWidth: 500, minHeight: 500, maxHeight: 600)
             .task {
                 appDelegate.setClipboardManager(clipboardManager)
                 logger.info("Clipboard manager setup complete")
             }
+            // Default window size only
+            .frame(width: 400, height: 550)
+        } label: {
+            // Dynamic menu bar label
+            HStack(spacing: 4) {
+                Image(systemName: preferencesManager.menuBarIcon)
+                if preferencesManager.showItemCount && clipboardManager.history.count > 0 {
+                    Text("\(clipboardManager.history.count)")
+                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                }
+            }
         }
         .menuBarExtraStyle(.window)
+        .defaultWindowPlacement { windowProxy, context in
+            let displayBounds = context.defaultDisplay.visibleRect
+            let size = windowProxy.sizeThatFits(.unspecified)
+            // Position in top-right corner, just below menu bar
+            let position = CGPoint(
+                x: displayBounds.maxX - size.width - 10,
+                y: displayBounds.minY + 25
+            )
+            return WindowPlacement(position, size: size)
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {
             case .active:
@@ -57,7 +80,8 @@ struct PopStashApp: App {
             } else {
                 dismissWindow(id: "notification")
             }
-        }        // Popup notification window
+        }
+        // Popup notification window
         Window("Notification", id: "notification") {
             NotificationPopupOverlay(popupManager: clipboardManager.popupManager)
                 .environment(preferencesManager)
@@ -65,14 +89,14 @@ struct PopStashApp: App {
         .windowStyle(.plain)
         .windowLevel(.floating)
         .windowBackgroundDragBehavior(.enabled)
-        .windowResizability(.contentMinSize)
+        .windowResizability(preferencesManager.windowMode == .resizable ? .contentSize : .contentMinSize)
         .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
-            // Position at top-right corner
+            // Position at top-right corner, with extra offset for native look
             let position = CGPoint(
-                x: displayBounds.maxX - size.width - 50,  // More left padding
-                y: displayBounds.minY + 80   // More top padding
+                x: displayBounds.maxX - size.width - 20,
+                y: displayBounds.minY + 40
             )
             return WindowPlacement(position, size: size)
         }
