@@ -164,7 +164,7 @@ final class ClipboardManager {
         self.lastChangeCount = NSPasteboard.general.changeCount
         logger.info("Starting clipboard monitoring - initial changeCount: \(self.lastChangeCount)")
         
-        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.checkClipboardChanges()
         }
     }

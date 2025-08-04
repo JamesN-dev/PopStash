@@ -2,16 +2,17 @@ import Foundation
 import AppKit
 
 // --- FIX 1: The enum is now Equatable AND Codable ---
-enum ClipContent: Equatable, Codable {
+enum ClipContent: Equatable, Codable, Hashable {
     case text(String)
     case image(Data)
 }
 
-struct ClipboardItem: Identifiable, Equatable, Codable {
+struct ClipboardItem: Identifiable, Equatable, Codable, Hashable {
     
     // --- FIX 2: The 'id' no longer has a default value here ---
     let id: UUID
     let content: ClipContent
+    let dateAdded: Date
     
     var isPinned: Bool = false
     let sourceAppName: String?
@@ -42,6 +43,7 @@ struct ClipboardItem: Identifiable, Equatable, Codable {
     init(content: ClipContent, sourceAppName: String?, sourceAppBundleID: String?) {
         self.id = UUID() // The new, unique ID is created here.
         self.content = content
+        self.dateAdded = Date() // Current timestamp
         self.sourceAppName = sourceAppName
         self.sourceAppBundleID = sourceAppBundleID
     }
@@ -53,6 +55,7 @@ struct ClipboardItem: Identifiable, Equatable, Codable {
         // It decodes the saved ID from the file instead of creating a new one.
         self.id = try container.decode(UUID.self, forKey: .id)
         self.content = try container.decode(ClipContent.self, forKey: .content)
+        self.dateAdded = try container.decodeIfPresent(Date.self, forKey: .dateAdded) ?? Date() // Default to now for old items
         self.isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
         self.sourceAppName = try container.decodeIfPresent(String.self, forKey: .sourceAppName)
         self.sourceAppBundleID = try container.decodeIfPresent(String.self, forKey: .sourceAppBundleID)
@@ -60,6 +63,6 @@ struct ClipboardItem: Identifiable, Equatable, Codable {
     
     // We explicitly list all properties for Codable to use.
     private enum CodingKeys: String, CodingKey {
-        case id, content, isPinned, sourceAppName, sourceAppBundleID
+        case id, content, dateAdded, isPinned, sourceAppName, sourceAppBundleID
     }
 }
