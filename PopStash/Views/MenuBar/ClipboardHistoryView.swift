@@ -6,7 +6,7 @@ struct ClipboardRowView: View {
     let item: ClipboardItem
     let index: Int
     let isSelected: Bool
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "doc")
@@ -36,9 +36,9 @@ struct ClipboardRowView: View {
                             .font(.system(size: 13))
                     }
                 }
-                
+
                 Spacer()
-                
+
                 if index < 9 {
                     Text("⌥\(index + 1)")
                         .foregroundColor(.secondary)
@@ -87,7 +87,7 @@ struct ClipboardHistoryView: View {
                 Text("PopStash")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
-                
+
                 if preferencesManager.showItemCount && clipboardManager.history.count > 0 {
                     Text("\(clipboardManager.history.count)")
                         .font(.system(size: 12, weight: .bold, design: .monospaced))
@@ -146,14 +146,14 @@ struct ClipboardHistoryView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("PopStash toolbar")
     }
-    
+
     private var searchBar: some View {
         TextField("Search clipboard...", text: $searchText)
             .textFieldStyle(RoundedBorderTextFieldStyle())
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
     }
-    
+
     private var emptyView: some View {
         VStack {
             Spacer()
@@ -167,7 +167,7 @@ struct ClipboardHistoryView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: 300)
     }
-    
+
     private var leftPanel: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -177,7 +177,7 @@ struct ClipboardHistoryView: View {
                             selectedItemId = item.id
                         }) {
                             ClipboardRowView(
-                                item: item, 
+                                item: item,
                                 index: index,
                                 isSelected: selectedItemId == item.id
                             )
@@ -198,7 +198,7 @@ struct ClipboardHistoryView: View {
         }
         .frame(width: 280)
     }
-    
+
     private var rightPanel: some View {
         Group {
             if let selectedId = selectedItemId,
@@ -222,20 +222,20 @@ struct ClipboardHistoryView: View {
             }
         }
     }
-    
+
     private var twoPanel: some View {
         HStack(spacing: 0) {
             leftPanel
-            
+
             // Divider
             Rectangle()
                 .fill(Color.secondary.opacity(0.3))
                 .frame(width: 1)
-            
+
             rightPanel
         }
     }
-    
+
     private var footer: some View {
         VStack(spacing: 0) {
             HStack {
@@ -255,7 +255,7 @@ struct ClipboardHistoryView: View {
         VStack(spacing: 0) {
             toolbar
             searchBar
-            
+
             if filteredHistory.isEmpty {
                 emptyView
             } else {
@@ -268,7 +268,7 @@ struct ClipboardHistoryView: View {
         // Updated size constraints for wider layout
         .frame(minWidth: 600, idealWidth: 600, maxWidth: 600, minHeight: 300, idealHeight: 500, maxHeight: 600)
         // Replace glassEffect with proper SwiftUI background styling
-        .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .onAppear {
             // Select first item by default
             if selectedItemId == nil, let firstItem = filteredHistory.first {
