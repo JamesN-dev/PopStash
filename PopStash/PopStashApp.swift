@@ -33,7 +33,11 @@ struct PopStashApp: App {
         MenuBarExtra {
             NavigationStack(path: $navigationPath) {
                 ClipboardHistoryView(
-                    closePopover: { /* Custom close logic, respects Pin state */ },
+                    closePopover: { 
+                        // For MenuBarExtra, the best approach is to let the system handle it
+                        // We can't reliably close it programmatically without side effects
+                        // Users can use ESC key or click outside to close
+                    },
                     openPreferences: {
                         navigationPath.append("preferences")
                     }
