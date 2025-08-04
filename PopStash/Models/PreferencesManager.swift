@@ -37,6 +37,7 @@ final class PreferencesManager {
 
     // MARK: - UI Preferences
     var menuBarIcon: String = "doc.on.clipboard"
+    var accentColorName: String = "blue"
     var showItemCount: Bool = true
     var enableKeyboardShortcuts: Bool = true
     var enableHoverEffect: Bool = true
@@ -67,6 +68,7 @@ final class PreferencesManager {
             autoSaveToHistory: autoSaveToHistory,
             enableImageCapture: enableImageCapture,
             menuBarIcon: menuBarIcon,
+            accentColorName: accentColorName,
             showItemCount: showItemCount,
             enableKeyboardShortcuts: enableKeyboardShortcuts,
             clearHistoryOnQuit: clearHistoryOnQuit,
@@ -96,6 +98,7 @@ final class PreferencesManager {
         autoSaveToHistory = preferences.autoSaveToHistory
         enableImageCapture = preferences.enableImageCapture
         menuBarIcon = preferences.menuBarIcon
+        accentColorName = preferences.accentColorName ?? "blue"
         showItemCount = preferences.showItemCount
         enableKeyboardShortcuts = preferences.enableKeyboardShortcuts
         clearHistoryOnQuit = preferences.clearHistoryOnQuit
@@ -115,6 +118,7 @@ final class PreferencesManager {
         autoSaveToHistory = true
         enableImageCapture = false
         menuBarIcon = "doc.on.clipboard"
+        accentColorName = "blue"
         showItemCount = true
         enableKeyboardShortcuts = true
         clearHistoryOnQuit = false
@@ -136,6 +140,7 @@ private struct PreferencesData: Codable {
     let autoSaveToHistory: Bool
     let enableImageCapture: Bool
     let menuBarIcon: String
+    let accentColorName: String?
     let showItemCount: Bool
     let enableKeyboardShortcuts: Bool
     let clearHistoryOnQuit: Bool
@@ -159,5 +164,25 @@ extension PreferencesManager {
 
     var menuBarIconOptions: [String] {
         ["doc.on.clipboard", "clipboard", "doc.text", "square.and.pencil"]
+    }
+    
+    var accentColorOptions: [(name: String, color: Color)] {
+        [
+            ("blue", .blue),
+            ("purple", .purple),
+            ("pink", .pink),
+            ("red", .red),
+            ("orange", .orange),
+            ("yellow", .yellow),
+            ("green", .green),
+            ("mint", .mint),
+            ("teal", .teal),
+            ("cyan", .cyan),
+            ("indigo", .indigo)
+        ]
+    }
+    
+    var currentAccentColor: Color {
+        accentColorOptions.first { $0.name == accentColorName }?.color ?? .blue
     }
 }
