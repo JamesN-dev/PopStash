@@ -1,36 +1,49 @@
 # PopStash TODO
 
-## RECENTLY COMPLETED / IN PROGRESS
-
-[x] PopEditor window styling fixed - Clean regularMaterial background matching ClipboardHistoryView
-[x] PopEditor titlebar added - "PopEditor" in sleek navigationTitle with toolbar styling  
-[x] TextEditor made editable - Removed conflicting backgrounds/overlays blocking interaction
-[x] Added input-monitoring entitlement for global Option+C shortcuts when app out of focus
-[x] Architectural guidance for window drag/activation separation completed
-[x] Correct modifier placement for window-level and view-level behaviors implemented
-[x] PopEditor drag logic clarified: content drag is separate from window drag
-[x] Fixed SwiftUI ShapeStyle.accent type errors by using .tint and Color.accentColor correctly
-[x] Removed confusing popover pin button - individual clipboard item pinning works perfectly
-[x] Fixed preferences navigation with NavigationPath and proper button action
-[x] MenuBarExtra positioning implemented with .defaultWindowPlacement
-[x] Hide item count badge when clipboard is empty (0 items)
-[x] **MAJOR FIX: PopEditor positioning issue resolved** - Removed .position(location) that was moving content off-screen
-[x] **PopEditor drag styling implemented** - Blue outline with responsive 1pt sensitivity and window-level dragging
-[x] **PopEditor content now displays properly** - Editor shows text instead of blank window
-
 ## HIGH PRIORITY
+
+### macOS Quick Look Implementation
+
+[ ] **#1 HIGH: Implement macOS Finder-style Quick Look for clipboard items**
+
+- Status: NEW FEATURE - Replace current MetadataView with native Quick Look experience
+- Requirements:
+  - Space key triggers fullscreen Quick Look overlay
+  - Pixel-perfect native macOS styling (adapts to dark/light mode)
+  - Header: [X] [⤢] "PopStash Item #N" title layout
+  - Actions: [Share] [Open with PopEditor] buttons
+  - ESC key to close overlay
+- Impact: Native Mac user experience, familiar interaction patterns
+- Implementation: Custom SwiftUI overlay matching system Quick Look appearance
+
+[ ] **#1 HIGH: Add keyboard navigation to clipboard list**
+
+- Arrow keys (up/down) to navigate clipboard items
+- Space bar to trigger Quick Look preview
+- Enter key to copy selected item
+- Option+click to open PopEditor for editing
+
+[ ] **#1 MED: Create Finder-style metadata sidebar panel**
+
+- Show Created/Modified timestamps
+- Display content type and character count
+- Source application info (when available)
+- Pin/unpin functionality
+
+[ ] **#1 LOW: Polish clipboard list appearance**
+
+- Add divider lines between clipboard items
+- Reduce left padding on items
+- Change background to .regularMaterial
+- More Finder-like spacing and styling
 
 ### Window & UI Critical Issues
 
-[ ] **#1 CRITICAL: Notification popup position bug after drag**
+[ ] **#1 HIGH: Fix PopEditor blue drag outline**
 
-- Status: NEW BUG DISCOVERED - After dragging PopEditor, next notification appears where bottom of editor was
-- Problem: Window positioning gets corrupted by drag operations, notifications spawn in wrong location
-- Impact: Core UX broken - popup appears in random locations after first drag
-- Solutions needed:
-  1. Always use persistent/fixed notification location (ignore drag state)
-  2. Reset window position when editor closes (snap back behavior)
-  3. Decide: Can notifications trigger while editor is open? (prevent multiple popups)
+- Status: Blue outline drag styling needs to be restored/fixed
+- Impact: PopEditor drag feedback is missing or broken
+- Implementation: Restore blue outline with responsive 1pt sensitivity and window-level dragging
 
 [ ] **#1 HIGH: Add sticky notes functionality to PopEditor**
 
@@ -41,35 +54,12 @@
 
 [ ] **#1 PROBLEM: X close button not working in clipboardview**
 
-[x] **Critical: Notification popup now focuses correctly**
-
-- Status: Window-level and view-level activation modifiers now correctly separated; single-click focus now works
-- Next: Fine-tune notification popup positioning to match native top-right style
-
-[x] **CRITICAL: PopEditor positioning and functionality restored**
-
-- Status: FIXED - Removed internal .position(location) and drag logic that was positioning content off-screen
-- Status: FIXED - PopEditor now displays text content properly instead of blank window
-- Status: FIXED - Window-level dragging works with responsive blue outline styling
-- Implementation: Drag state propagated from NotificationPopupOverlay -> NotificationPopupView -> PopEditor
-
-[ ] **CRITICAL: Remove window minimize/close buttons from popup**
-
-- Status: Tried `.plain`, `.hiddenTitleBar`, `HiddenTitleBarWindowStyle()` - all still show buttons
-- Impact: Makes popup look unprofessional and cluttered
-- Next: Try custom NSWindow approach or windowToolbarStyle modifiers
-
 [ ] **HIGH: Add live clipboard history update while typing**
 
 - Status: Currently only updates on confirm/cancel
 - Impact: Poor UX - user can't see real-time preview of changes
 - Requirement: Update clipboard history as user types in editor
 - Implementation: Bind editor text to history item in real-time
-
-[x] **Window mode switching deferred**
-
-- Status: All dynamic window mode wiring removed from PopStashApp.swift; only default sizing is active for now
-- Next: Revisit compact/resizable modes and reconnect Preferences logic in a future update
 
 ### Core Functionality Fixes
 
@@ -87,24 +77,9 @@
 
 ### UX Improvements
 
-- [x] Add hover effect toggle to preferences panel
-- PopButtonStyle now respects both system and user hover effect settings
-
-- [ ] **MED: Make popup editor resizable**
-
-  - Status: Currently fixed size with `.windowResizability(.contentSize)`
-  - Impact: Limited editing experience for long text
-  - Next: Change to `.contentMinSize` or custom resize behavior
-
-  - [ ] Image clipboard support
-  - [ ] Advanced settings panel
-  - [ ] Custom keyboard shortcut configuration
-
-- [ ] **MED: Improve window positioning calculation**
-
-  - Status: Positioning logic seems correct but results are wrong
-  - Impact: Inconsistent popup placement across different screens
-  - Debug: Coordinate system differences, display bounds calculation
+- [ ] Image clipboard support
+- [ ] Advanced settings panel (skeleton setup but not wired)
+- [ ] Custom keyboard shortcut configuration
 
 - [ ] **MED: Add multi-monitor positioning support**
   - Status: Currently uses `context.defaultDisplay` which only targets main screen
@@ -116,8 +91,6 @@
 
 ### Technical Cleanup
 
-- [ ] Refactor ClipboardHistoryView onTapGesture to Button with PopButtonStyle for consistent UX
-  - Status: Found tap to copy action; will refactor to Button for accessibility and style consistency
 - [ ] **LOW: Fix metal library warnings**
 
   - Error: "Unable to open mach-O at path: default.metallib Error:2"
@@ -128,6 +101,12 @@
   - Error: "ViewBridge to RemoteViewService Terminated: Error Domain=com.apple.ViewBridge Code=18"
   - Impact: Console noise during window operations
   - Investigation: Related to SwiftUI window lifecycle
+
+- [ ] **FRAGILE: Window draggable and editable**
+  - Status: Currently working BUT very fragile - had to revert from `.plain` to `.hiddenTitleBar`
+  - Problem: `.plain` = no buttons but kills drag/edit, `.hiddenTitleBar` = drag/edit works but shows buttons
+  - Issue: No stable solution that gives us both button-free AND draggable/editable
+  - Risk: Any window style change breaks either functionality or appearance
 
 ---
 
@@ -168,20 +147,35 @@
 
 ## COMPLETED ITEMS
 
-### Architecture & Core Setup
-
-- [x] Modern `@Observable` state management implemented
-- [x] KeyboardShortcuts framework integrated successfully
-- [x] PopStashApp structure modernized with proper lifecycle
-- [x] AppDelegate integration completed and working
-- [x] Basic clipboard capture and history functionality
-- [x] Smart detection with Accessibility API implemented
-- [x] Popup window state management (show/hide) working
-- [x] Text editor popup functionality restored
-- [ ] **FRAGILE: Window draggable and editable**
-  - Status: Currently working BUT very fragile - had to revert from `.plain` to `.hiddenTitleBar`
-  - Problem: `.plain` = no buttons but kills drag/edit, `.hiddenTitleBar` = drag/edit works but shows buttons
-  - Issue: No stable solution that gives us both button-free AND draggable/editable
-  - Risk: Any window style change breaks either functionality or appearance
-- [x] Option+C hotkey triggering and processing text
-- [x] Clipboard content capture and popup display working
+[x] PopEditor window styling fixed - Clean regularMaterial background matching ClipboardHistoryView
+[x] PopEditor titlebar added - "PopEditor" in sleek navigationTitle with toolbar styling
+[x] TextEditor made editable - Removed conflicting backgrounds/overlays blocking interaction
+[x] Added input-monitoring entitlement for global Option+C shortcuts when app out of focus
+[x] Architectural guidance for window drag/activation separation completed
+[x] Correct modifier placement for window-level and view-level behaviors implemented
+[x] PopEditor drag logic clarified: content drag is separate from window drag
+[x] Fixed SwiftUI ShapeStyle.accent type errors by using .tint and Color.accentColor correctly
+[x] Removed confusing popover pin button - individual clipboard item pinning works perfectly
+[x] Fixed preferences navigation with NavigationPath and proper button action
+[x] MenuBarExtra positioning implemented with .defaultWindowPlacement
+[x] Hide item count badge when clipboard is empty (0 items)
+[x] **MAJOR FIX: PopEditor positioning issue resolved** - Removed .position(location) that was moving content off-screen
+[x] **PopEditor drag styling implemented** - Blue outline with responsive 1pt sensitivity and window-level dragging
+[x] **PopEditor content now displays properly** - Editor shows text instead of blank window
+[x] **#1 CRITICAL: Notification popup position bug after drag** - Fixed positioning corruption
+[x] **Critical: Notification popup now focuses correctly** - Window-level and view-level activation modifiers separated
+[x] **CRITICAL: PopEditor positioning and functionality restored** - Window-level dragging works with blue outline styling
+[x] **Window mode sizing modes switching deferred** - Dynamic window mode wiring removed, only default sizing active
+[x] Add hover effect toggle to preferences panel - PopButtonStyle respects system and user hover effect settings
+[x] **MED: Make popup editor resizable** - Changed from fixed size to resizable
+[x] **MED: Improve window positioning calculation** - Positioning logic corrected
+[x] Modern `@Observable` state management implemented
+[x] KeyboardShortcuts framework integrated successfully
+[x] PopStashApp structure modernized with proper lifecycle
+[x] AppDelegate integration completed and working
+[x] Basic clipboard capture and history functionality
+[x] Smart detection with Accessibility API implemented
+[x] Popup window state management (show/hide) working
+[x] Text editor popup functionality restored
+[x] Option+C hotkey triggering and processing text
+[x] Clipboard content capture and popup display working
