@@ -1,64 +1,116 @@
 // ClipboardHistoryView.swift
 import SwiftUI
 
-// Clipboard row view for individual items - modernized, flat design
+// Clipboard row view for individual items - Finder-style design
 struct ClipboardRowView: View {
     let item: ClipboardItem
     let index: Int
     let isSelected: Bool
+    let clipboardManager: ClipboardManager
+    let onItemClick: () -> Void
 
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "doc")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 16)
-
-            HStack(spacing: 6) {
-                switch item.content {
-                case .text(let text):
-                    Text(text)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.primary)
-                case .image:
-                    if let nsImage = item.image {
-                        Image(nsImage: nsImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 20, height: 20)
-                            .clipped()
-                            .cornerRadius(3)
-                    } else {
-                        Text("Invalid Image")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 13))
-                    }
-                }
-
-                Spacer()
-
-                if index < 9 {
-                    Text("⌥\(index + 1)")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                }
-
-                if item.isPinned {
-                    Image(systemName: "pin.fill")
-                        .foregroundStyle(.tint)
-                        .font(.system(size: 10, weight: .medium))
+    private var contentView: some View {
+        Group {
+            switch item.content {
+            case .text(let text):
+                Text(text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(isSelected ? .white : .primary)
+            case .image:
+                if let nsImage = item.image {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 16, height: 16)
+                        .clipped()
+                        .cornerRadius(2)
+                } else {
+                    Text("Invalid Image")
+                        .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                        .font(.system(size: 13))
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            Rectangle()
-                .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-        )
+    }
+
+    private var shortcutView: some View {
+        Group {
+            if index < 9 {
+                Text("⌥\(index + 1)")
+                    .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary.opacity(0.6))
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+            }
+        }
+    }
+
+    private var pinButton: some View {
+        Button(action: {
+            clipboardManager.togglePin(for: item)
+        }) {
+            Image(systemName: item.isPinned ? "pin.fill" : "pin")
+                .foregroundStyle(pinButtonColor)
+                .font(.system(size: 9, weight: .medium))
+        }
+        .buttonStyle(.plain)
+        .frame(width: 20, height: 20) // Slightly larger clickable area
         .contentShape(Rectangle())
+        .help(item.isPinned ? "Unpin item" : "Pin item")
+    }
+    
+    private var pinButtonColor: Color {
+        if isSelected {
+            return .white.opacity(0.8)
+        } else if item.isPinned {
+            return .accentColor
+        } else {
+            return .secondary.opacity(0.5)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                // Main clickable area (everything except pin button)
+                HStack(spacing: 6) {
+                    // Document icon
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 14)
+
+                    // Content
+                    contentView
+
+                    Spacer()
+
+                    // Keyboard shortcut
+                    shortcutView
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onItemClick()
+                }
+
+                // Pin button (separate, non-conflicting area)
+                pinButton
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Rectangle()
+                    .fill(isSelected ? Color.accentColor : Color.clear)
+            )
+            
+            // Divider line
+            if index < 999 {
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.15))
+                    .frame(height: 0.5)
+                    .padding(.leading, 28)
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.previewText)
         .accessibilityHint(item.isPinned ? "Pinned clipboard item" : "Clipboard item")
@@ -71,6 +123,8 @@ struct ClipboardHistoryView: View {
     @Environment(PreferencesManager.self) private var preferencesManager
     @State private var searchText = ""
     @State private var selectedItemId: UUID?
+    @State private var showingQuickLook: Bool = false
+    @State private var showingSidebar: Bool = false
 
     var closePopover: () -> Void = {}
     var openPreferences: () -> Void = {}
@@ -126,18 +180,6 @@ struct ClipboardHistoryView: View {
                 .background(.regularMaterial, in: Circle())
                 .focusEffectDisabled()
                 .help("Analytics")
-
-                // Close button
-                Button(action: { closePopover() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .frame(width: 28, height: 28)
-                .background(.regularMaterial, in: Circle())
-                .focusEffectDisabled()
-                .help("Close")
             }
         }
         .padding(.horizontal, 16)
@@ -171,32 +213,32 @@ struct ClipboardHistoryView: View {
     private var leftPanel: some View {
         VStack(spacing: 0) {
             ScrollView {
-                LazyVStack(spacing: 1) {
+                LazyVStack(spacing: 0) {
                     ForEach(filteredHistory, id: \.element.id) { index, item in
-                        Button(action: {
-                            selectedItemId = item.id
-                        }) {
-                            ClipboardRowView(
-                                item: item,
-                                index: index,
-                                isSelected: selectedItemId == item.id
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .onTapGesture(count: 2) {
-                            // Double-tap to copy
-                            clipboardManager.copyItemToClipboard(item: item)
-                        }
+                        ClipboardRowView(
+                            item: item,
+                            index: index,
+                            isSelected: selectedItemId == item.id,
+                            clipboardManager: clipboardManager,
+                            onItemClick: {
+                                // Single click copies to clipboard
+                                clipboardManager.copyItemToClipboard(item: item)
+                                // Also update selection for visual feedback
+                                selectedItemId = item.id
+                            }
+                        )
                         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: clipboardManager.history)
                         .accessibilityLabel(item.previewText)
                         .accessibilityHint(item.isPinned ? "Pinned clipboard item" : "Clipboard item")
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 2)
             }
+            .scrollIndicators(.hidden) // Hide scrollbar to avoid pin button conflicts
             .frame(maxHeight: 400)
         }
         .frame(width: 280)
+        .background(.regularMaterial)
     }
 
     private var rightPanel: some View {
@@ -269,8 +311,41 @@ struct ClipboardHistoryView: View {
         .frame(minWidth: 600, idealWidth: 600, maxWidth: 600, minHeight: 300, idealHeight: 500, maxHeight: 600)
         // Replace glassEffect with proper SwiftUI background styling
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .focusable()
+        .onKeyPress(.upArrow) {
+            navigateUp()
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            navigateDown()
+            return .handled
+        }
+        .onKeyPress(.return) {
+            copySelectedAndClose()
+            return .handled
+        }
+        .onKeyPress(.space) {
+            triggerQuickLook()
+            return .handled
+        }
+        .onKeyPress(.escape) {
+            if showingQuickLook {
+                showingQuickLook = false
+            } else {
+                closePopover()
+            }
+            return .handled
+        }
+        .onKeyPress(.home) {
+            selectFirstItem()
+            return .handled
+        }
+        .onKeyPress(.end) {
+            selectLastItem()
+            return .handled
+        }
         .onAppear {
-            // Select first item by default
+            // Auto-select first item when opening MenuBar
             if selectedItemId == nil, let firstItem = filteredHistory.first {
                 selectedItemId = firstItem.element.id
             }
@@ -296,14 +371,71 @@ struct ClipboardHistoryView: View {
             $0.previewText.lowercased().contains(searchText.lowercased())
         }
 
+        // Stable sorting: pinned items stay in their original relative order at the top,
+        // unpinned items stay in their original relative order below
         let sorted = filtered.sorted { item1, item2 in
-            if item1.isPinned && !item2.isPinned { return true }
-            return false
+            // Both pinned or both unpinned - maintain original order
+            if item1.isPinned == item2.isPinned {
+                // Find original indices in the full history to maintain order
+                let index1 = clipboardManager.history.firstIndex { $0.id == item1.id } ?? 0
+                let index2 = clipboardManager.history.firstIndex { $0.id == item2.id } ?? 0
+                return index1 < index2
+            }
+            // One pinned, one not - pinned goes first
+            return item1.isPinned && !item2.isPinned
         }
 
         return sorted.enumerated().map { (index, element) in
             return (index: index, element: element)
         }
+    }
+    
+    // MARK: - Keyboard Navigation Functions
+    
+    private func navigateUp() {
+        guard !filteredHistory.isEmpty else { return }
+        
+        if let selectedId = selectedItemId,
+           let currentIndex = filteredHistory.firstIndex(where: { $0.element.id == selectedId }) {
+            let newIndex = max(0, currentIndex - 1)
+            selectedItemId = filteredHistory[newIndex].element.id
+        } else {
+            selectedItemId = filteredHistory.first?.element.id
+        }
+    }
+    
+    private func navigateDown() {
+        guard !filteredHistory.isEmpty else { return }
+        
+        if let selectedId = selectedItemId,
+           let currentIndex = filteredHistory.firstIndex(where: { $0.element.id == selectedId }) {
+            let newIndex = min(filteredHistory.count - 1, currentIndex + 1)
+            selectedItemId = filteredHistory[newIndex].element.id
+        } else {
+            selectedItemId = filteredHistory.first?.element.id
+        }
+    }
+    
+    private func selectFirstItem() {
+        selectedItemId = filteredHistory.first?.element.id
+    }
+    
+    private func selectLastItem() {
+        selectedItemId = filteredHistory.last?.element.id
+    }
+    
+    private func copySelectedAndClose() {
+        guard let selectedId = selectedItemId,
+              let selectedItem = filteredHistory.first(where: { $0.element.id == selectedId })?.element else { return }
+        
+        clipboardManager.copyItemToClipboard(item: selectedItem)
+        closePopover()
+    }
+    
+    private func triggerQuickLook() {
+        guard selectedItemId != nil else { return }
+        showingQuickLook = true
+        // TODO: Implement Quick Look overlay
     }
 }
 
