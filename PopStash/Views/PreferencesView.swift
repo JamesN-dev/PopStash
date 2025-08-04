@@ -115,6 +115,27 @@ struct PreferencesView: View {
                         .pickerStyle(.menu)
                     }
 
+                    HStack {
+                        Text("Accent color:")
+                        Spacer()
+                        Picker("Color", selection: .init(
+                            get: { preferences.accentColorName },
+                            set: { preferences.accentColorName = $0; preferences.savePreferences() }
+                        )) {
+                            ForEach(preferences.accentColorOptions, id: \.name) { option in
+                                Label {
+                                    Text(option.name.capitalized)
+                                } icon: {
+                                    Circle()
+                                        .fill(option.color)
+                                        .frame(width: 12, height: 12)
+                                }
+                                .tag(option.name)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+
                     Toggle("Show item count in menu", isOn: .init(
                         get: { preferences.showItemCount },
                         set: { preferences.showItemCount = $0; preferences.savePreferences() }

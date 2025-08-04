@@ -45,25 +45,11 @@ struct ClipboardRowView: View {
         }
     }
 
-    private var pinButton: some View {
-        Button(action: {
-            clipboardManager.togglePin(for: item)
-        }) {
-            Image(systemName: item.isPinned ? "pin.fill" : "pin")
-                .foregroundStyle(pinButtonColor)
-                .font(.system(size: 9, weight: .medium))
-        }
-        .buttonStyle(.plain)
-        .frame(width: 20, height: 20) // Slightly larger clickable area
-        .contentShape(Rectangle())
-        .help(item.isPinned ? "Unpin item" : "Pin item")
-    }
-    
     private var pinButtonColor: Color {
         if isSelected {
             return .white.opacity(0.8)
         } else if item.isPinned {
-            return .accentColor
+            return Color.accentColor
         } else {
             return .secondary.opacity(0.5)
         }
@@ -72,7 +58,7 @@ struct ClipboardRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 6) {
-                // Main clickable area (everything except pin button)
+                // Clickable content area
                 HStack(spacing: 6) {
                     // Document icon
                     Image(systemName: "doc.text")
@@ -93,8 +79,17 @@ struct ClipboardRowView: View {
                     onItemClick()
                 }
 
-                // Pin button (separate, non-conflicting area)
-                pinButton
+                // Pin button (isolated tap area)
+                Button(action: {
+                    clipboardManager.togglePin(for: item)
+                }) {
+                    Image(systemName: item.isPinned ? "pin.fill" : "pin")
+                        .foregroundStyle(pinButtonColor)
+                        .font(.system(size: 9, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.plain)
+                .help(item.isPinned ? "Unpin item" : "Pin item")
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -102,7 +97,7 @@ struct ClipboardRowView: View {
                 Rectangle()
                     .fill(isSelected ? Color.accentColor : Color.clear)
             )
-            
+
             // Divider line
             if index < 999 {
                 Rectangle()
@@ -389,12 +384,12 @@ struct ClipboardHistoryView: View {
             return (index: index, element: element)
         }
     }
-    
+
     // MARK: - Keyboard Navigation Functions
-    
+
     private func navigateUp() {
         guard !filteredHistory.isEmpty else { return }
-        
+
         if let selectedId = selectedItemId,
            let currentIndex = filteredHistory.firstIndex(where: { $0.element.id == selectedId }) {
             let newIndex = max(0, currentIndex - 1)
@@ -403,10 +398,10 @@ struct ClipboardHistoryView: View {
             selectedItemId = filteredHistory.first?.element.id
         }
     }
-    
+
     private func navigateDown() {
         guard !filteredHistory.isEmpty else { return }
-        
+
         if let selectedId = selectedItemId,
            let currentIndex = filteredHistory.firstIndex(where: { $0.element.id == selectedId }) {
             let newIndex = min(filteredHistory.count - 1, currentIndex + 1)
@@ -415,23 +410,23 @@ struct ClipboardHistoryView: View {
             selectedItemId = filteredHistory.first?.element.id
         }
     }
-    
+
     private func selectFirstItem() {
         selectedItemId = filteredHistory.first?.element.id
     }
-    
+
     private func selectLastItem() {
         selectedItemId = filteredHistory.last?.element.id
     }
-    
+
     private func copySelectedAndClose() {
         guard let selectedId = selectedItemId,
               let selectedItem = filteredHistory.first(where: { $0.element.id == selectedId })?.element else { return }
-        
+
         clipboardManager.copyItemToClipboard(item: selectedItem)
         closePopover()
     }
-    
+
     private func triggerQuickLook() {
         guard selectedItemId != nil else { return }
         showingQuickLook = true

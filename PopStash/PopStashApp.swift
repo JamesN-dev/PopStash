@@ -51,6 +51,7 @@ struct PopStashApp: App {
                     }
                 }
             }
+            .tint(preferencesManager.currentAccentColor)
             .onAppear {
                 // Setup clipboard manager synchronously when the view appears
                 clipboardManager.popupManager.setWindowManager(windowManager)
