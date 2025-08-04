@@ -52,8 +52,8 @@ struct PopStashApp: App {
                 clipboardManager.popupManager.setWindowManager(windowManager)
                 logger.info("Clipboard manager setup complete")
             }
-            // Default window size only
-            .frame(width: 400, height: 550)
+            // Updated window size for side panel layout
+            .frame(width: 600, height: 550)
         } label: {
             // Dynamic menu bar label
             HStack(spacing: 4) {

@@ -55,7 +55,7 @@ struct PopEditor: View {
                             NSApp.sendAction(#selector(NSTextView.showWritingTools(_:)), to: nil, from: nil)
                         }) {
                             Image(systemName: "wand.and.stars")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: 13, weight: .medium))
                         }
                         .help("Writing Tools")
                     }
