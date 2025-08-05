@@ -27,12 +27,14 @@ struct PopStashApp: App {
     @Environment(\.dismissWindow) private var dismissWindow
     @State private var preferencesManager = PreferencesManager()
     @State private var windowManager = WindowManager()
+    @State private var showMetadata = false
 
     var body: some Scene {
         // MenuBarExtra with NavigationStack - (clipboard and preferences)
         MenuBarExtra {
             NavigationStack(path: $navigationPath) {
                 ClipboardHistoryView(
+                    showMetadata: $showMetadata,
                     closePopover: { 
                         // For MenuBarExtra, the best approach is to let the system handle it
                         // We can't reliably close it programmatically without side effects
@@ -57,8 +59,8 @@ struct PopStashApp: App {
                 clipboardManager.popupManager.setWindowManager(windowManager)
                 logger.info("Clipboard manager setup complete")
             }
-            // Updated window size for side panel layout
-            .frame(width: 600, height: 550)
+            // Dynamic window size based on metadata panel state
+            .frame(width: showMetadata ? 600 : 320, height: 550)
         } label: {
             // Dynamic menu bar label
             HStack(spacing: 4) {
