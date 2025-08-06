@@ -28,6 +28,13 @@ struct ClipboardItem: Identifiable, Equatable, Codable, Hashable {
         }
     }
     
+    // Placeholder item for when no items exist
+    static let placeholder = ClipboardItem(
+        content: .text("No items available"),
+        sourceAppName: "PopStash",
+        sourceAppBundleID: "com.popstash.app"
+    )
+    
     // Helper property to get an NSImage from data
     var image: NSImage? {
         switch content {

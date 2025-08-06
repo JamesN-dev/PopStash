@@ -9,9 +9,11 @@ struct ClipboardHistoryView: View {
     @Binding var showMetadata: Bool
     @State private var searchText = ""
     @State private var selectedItemId: UUID?
+    @State private var selectedItemIds: Set<UUID> = [] // Multi-selection support
     
     @FocusState private var isSearchFocused: Bool
     @FocusState private var focusedRowId: UUID?
+    @FocusState private var isViewFocused: Bool // For keyboard shortcuts
 
     var closePopover: () -> Void = {}
     var openPreferences: () -> Void = {}
@@ -52,13 +54,29 @@ struct ClipboardHistoryView: View {
                         focusedRowId: $focusedRowId,
                         clipboardManager: clipboardManager,
                         onItemClick: { item in
+                            // Clear multi-selection on regular click
+                            selectedItemIds.removeAll()
                             selectedItemId = item.id
                             focusedRowId = item.id
+                            // Only copy to clipboard, don't move to top
                             clipboardManager.copyItemToClipboard(item: item)
                             closePopover()
                         },
+                        onItemShiftClick: { item in
+                            handleShiftClick(item: item)
+                        },
+                        selectedItemIds: $selectedItemIds,
                         moveSelection: moveSelection
                     )
+                    .contextMenu {
+                        // Multi-selection context menu
+                        if !selectedItemIds.isEmpty {
+                            Button("Delete \(selectedItemIds.count) Items", role: .destructive) {
+                                clipboardManager.deleteItems(with: selectedItemIds)
+                                selectedItemIds.removeAll()
+                            }
+                        }
+                    }
                 }
                 
                 FooterView(
@@ -68,32 +86,53 @@ struct ClipboardHistoryView: View {
                 )
             }
             .frame(width: 320)
-            .background(DesignSystem.Colors.backgroundSecondary)
+            // Removed solid background to allow glass effect to show through
 
-            // Sidebar Panel
-            if showMetadata {
-                // Ensure there's a valid item to pass to the MetadataView
-                if let selectedId = selectedItemId, let selectedItem = filteredHistory.first(where: { $0.id == selectedId }) {
-                    MetadataView(item: selectedItem, manager: clipboardManager)
-                        .frame(width: 280)
-                        .transition(.asymmetric(insertion: .scale(scale: 0.001, anchor: .leading).combined(with: .opacity), removal: .scale(scale: 0.001, anchor: .leading).combined(with: .opacity)))
-                } else if let firstItem = filteredHistory.first {
-                     MetadataView(item: firstItem, manager: clipboardManager)
-                        .frame(width: 280)
-                        .transition(.asymmetric(insertion: .scale(scale: 0.001, anchor: .leading).combined(with: .opacity), removal: .scale(scale: 0.001, anchor: .leading).combined(with: .opacity)))
-                }
-            }
+            // Sidebar Panel - Keep persistent to avoid expensive creation/destruction
+            MetadataView(
+                item: selectedItemId != nil && filteredHistory.contains(where: { $0.id == selectedItemId }) 
+                    ? filteredHistory.first(where: { $0.id == selectedItemId })!
+                    : filteredHistory.first ?? ClipboardItem.placeholder,
+                manager: clipboardManager
+            )
+            .frame(width: showMetadata ? 280 : 0)
+            .opacity(showMetadata ? 1 : 0)
+            .clipped() // Prevent content from showing outside the collapsed frame
+            .transition(
+                .asymmetric(
+                    insertion: .slide.combined(with: .scale(scale: 0.95, anchor: .leading)),
+                    removal: .slide.combined(with: .scale(scale: 0.95, anchor: .leading))
+                )
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .fixedSize()
+        // Removed .fixedSize() to prevent layout performance issues
         .glassEffect()
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
         .shadow(color: DesignSystem.Shadow.medium.color, radius: DesignSystem.Shadow.medium.radius, x: DesignSystem.Shadow.medium.x, y: DesignSystem.Shadow.medium.y)
-        .onAppear(perform: setupInitialState)
+        .focusable() // Make the view focusable for keyboard shortcuts
+        .focused($isViewFocused)
+        .focusEffectDisabled() // Hide the focus ring
+        .onAppear {
+            setupInitialState()
+            // Delay focus to ensure view is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isViewFocused = true
+            }
+        }
         .onChange(of: clipboardManager.history) { _, _ in syncSelection() }
         .onChange(of: searchText) { _, _ in syncSelection() }
         .onKeyPress(.return) { copySelectedAndClose(); return .handled }
         .onKeyPress(.escape) { closePopover(); return .handled }
+        .onDeleteCommand { deleteSelectedItems() } // Use dedicated delete command
+        .background {
+            // Hidden buttons for keyboard shortcuts that need modifiers
+            VStack {
+                Button("") { selectAllItems() }
+                    .keyboardShortcut("a", modifiers: .command) // Changed to Cmd+A
+                    .hidden()
+            }
+        }
     }
 
     // MARK: - Core Logic
@@ -135,8 +174,41 @@ struct ClipboardHistoryView: View {
     private func copySelectedAndClose() {
         guard let selectedId = selectedItemId,
               let selected = filteredHistory.first(where: { $0.id == selectedId }) else { return }
-        clipboardManager.copyItemToClipboard(item: selected)
+        // Use the method that moves to top for keyboard shortcut
+        clipboardManager.copyItemToClipboardAndMoveToTop(item: selected)
         closePopover()
+    }
+    
+    private func deleteSelectedItems() {
+        if selectedItemIds.isEmpty {
+            // If no multi-selection, delete the currently selected item
+            if let selectedId = selectedItemId {
+                clipboardManager.deleteItem(with: selectedId)
+            }
+        } else {
+            // Delete all selected items
+            clipboardManager.deleteItems(with: selectedItemIds)
+            selectedItemIds.removeAll()
+        }
+    }
+    
+    private func selectAllItems() {
+        selectedItemIds = Set(filteredHistory.map { $0.id })
+    }
+    
+    private func handleShiftClick(item: ClipboardItem) {
+        if let lastSelectedId = selectedItemId,
+           let lastIndex = filteredHistory.firstIndex(where: { $0.id == lastSelectedId }),
+           let currentIndex = filteredHistory.firstIndex(where: { $0.id == item.id }) {
+            
+            let range = min(lastIndex, currentIndex)...max(lastIndex, currentIndex)
+            let itemsInRange = Array(filteredHistory[range])
+            selectedItemIds = Set(itemsInRange.map { $0.id })
+        } else {
+            selectedItemIds.insert(item.id)
+        }
+        selectedItemId = item.id
+        focusedRowId = item.id
     }
 }
 
@@ -170,7 +242,7 @@ private struct ToolbarView: View {
             HStack(spacing: DesignSystem.Spacing.sm) {
                 ToolbarButton(systemName: "gearshape.fill", help: "Preferences", action: openPreferences)
                 ToolbarButton(systemName: "sidebar.right", help: "Toggle Sidebar (I)", foregroundColor: isSidebarVisible ? preferencesManager.currentAccentColor : .gray.opacity(0.7)) {
-                    withAnimation(DesignSystem.Animation.bouncy) {
+                    withAnimation(.bouncy(duration: 0.4)) {
                         isSidebarVisible.toggle()
                     }
                 }
@@ -178,7 +250,7 @@ private struct ToolbarView: View {
         }
         .padding(.horizontal, DesignSystem.Spacing.lg)
         .padding(.vertical, DesignSystem.Spacing.sm)
-        .background(DesignSystem.Materials.ultraThin)
+        .glassEffect(in: Rectangle())
     }
 }
 
@@ -213,7 +285,7 @@ private struct SearchBarView: View {
         }
         .padding(.horizontal, DesignSystem.Spacing.sm)
         .padding(.vertical, DesignSystem.Spacing.sm - 2)
-        .background(DesignSystem.Colors.background, in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm))
+        .background(DesignSystem.Materials.ultraThin, in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm))
         .padding(DesignSystem.Spacing.sm)
         .onKeyPress(.downArrow) {
             onArrowDown()
@@ -243,21 +315,26 @@ private struct HistoryListView: View {
     var focusedRowId: FocusState<UUID?>.Binding
     let clipboardManager: ClipboardManager
     let onItemClick: (ClipboardItem) -> Void
+    let onItemShiftClick: (ClipboardItem) -> Void
+    @Binding var selectedItemIds: Set<UUID>
     let moveSelection: (Int) -> Void
 
     var body: some View {
-        List(selection: $selectedItemId) {
+        List { // Removed selection binding to eliminate blue highlighting
             ForEach(history) { item in
                 ClipboardRowView(
                     item: item,
                     index: history.firstIndex(of: item) ?? 0,
                     isSelected: selectedItemId == item.id,
+                    isMultiSelected: selectedItemIds.contains(item.id),
                     clipboardManager: clipboardManager,
-                    onItemClick: { onItemClick(item) }
+                    onItemClick: { onItemClick(item) },
+                    onItemShiftClick: { onItemShiftClick(item) },
+                    focusedRowId: focusedRowId.wrappedValue // Pass the actual UUID? value
                 )
                 .tag(item.id)
                 .focused(focusedRowId, equals: item.id)
-                .listRowBackground(Color.clear)
+                .listRowBackground(Color.clear) // Remove List's built-in selection background
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets())
             }
@@ -265,8 +342,48 @@ private struct HistoryListView: View {
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .frame(maxHeight: .infinity)
-        .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
-        .onKeyPress(.downArrow) { moveSelection(1); return .handled }
+        .onKeyPress(.upArrow) { 
+            if NSEvent.modifierFlags.contains(.shift) {
+                // Shift+Up: Extend selection
+                extendSelectionUp()
+            } else {
+                moveSelection(-1)
+            }
+            return .handled 
+        }
+        .onKeyPress(.downArrow) { 
+            if NSEvent.modifierFlags.contains(.shift) {
+                // Shift+Down: Extend selection  
+                extendSelectionDown()
+            } else {
+                moveSelection(1)
+            }
+            return .handled 
+        }
+    }
+    
+    private func extendSelectionUp() {
+        guard let currentId = selectedItemId,
+              let currentIndex = history.firstIndex(where: { $0.id == currentId }),
+              currentIndex > 0 else { return }
+        
+        let newIndex = currentIndex - 1
+        let newId = history[newIndex].id
+        selectedItemIds.insert(newId)
+        selectedItemId = newId
+        focusedRowId.wrappedValue = newId
+    }
+    
+    private func extendSelectionDown() {
+        guard let currentId = selectedItemId,
+              let currentIndex = history.firstIndex(where: { $0.id == currentId }),
+              currentIndex < history.count - 1 else { return }
+        
+        let newIndex = currentIndex + 1
+        let newId = history[newIndex].id
+        selectedItemIds.insert(newId)
+        selectedItemId = newId
+        focusedRowId.wrappedValue = newId
     }
 }
 
@@ -274,35 +391,119 @@ private struct ClipboardRowView: View {
     let item: ClipboardItem
     let index: Int
     let isSelected: Bool
+    let isMultiSelected: Bool
     let clipboardManager: ClipboardManager
     let onItemClick: () -> Void
+    let onItemShiftClick: () -> Void
+    let focusedRowId: UUID? // Add focusedRowId parameter back
     @Environment(PreferencesManager.self) private var preferencesManager
+    
+    @State private var isHovering = false
+    
+    private var backgroundStyle: AnyShapeStyle {
+        if isHovering, case .text = item.content {
+            return AnyShapeStyle(Color.primary.opacity(0.3))
+        }
+        if isMultiSelected {
+            return AnyShapeStyle(preferencesManager.currentAccentColor.opacity(0.15)) // Lighter multi-select
+        } else if isSelected {
+            return AnyShapeStyle(preferencesManager.currentAccentColor.opacity(0.1)) // Light base selection
+        } else {
+            return AnyShapeStyle(Color.clear)
+        }
+    }
 
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.sm) {
-            HStack(spacing: DesignSystem.Spacing.sm) {
-                Image(systemName: "doc.text")
-                    .font(DesignSystem.Typography.subheadline)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .frame(width: 14)
-                ClipboardItemContentView(item: item, isSelected: isSelected)
-                Spacer()
-                ShortcutView(index: index, isSelected: isSelected)
+            Button(action: {
+                if NSEvent.modifierFlags.contains(.shift) {
+                    // Shift+click: Multi-select
+                    onItemShiftClick()
+                } else if NSEvent.modifierFlags.contains(.option) {
+                    // Option+click: Open in PopEditor (text items only)
+                    if case .text = item.content {
+                        clipboardManager.openEditorWith(item: item)
+                    }
+                } else {
+                    // Regular click: Copy to clipboard
+                    onItemClick()
+                }
+            }) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    Image(systemName: "doc.text")
+                        .font(DesignSystem.Typography.subheadline)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .frame(width: 14)
+                    ClipboardItemContentView(item: item, isSelected: isSelected)
+                    Spacer()
+                    
+                    // Show Option+click hint for text items when hovering
+                    if isHovering {
+                        Text("⌥+click to edit")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.background.opacity(0.8), in: Capsule())
+                            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                    }
+                    
+                    ShortcutView(index: index, isSelected: isSelected)
+                }
+                .contentShape(Rectangle()) // Make entire area clickable
             }
-            .contentShape(Rectangle())
-            .onTapGesture(perform: onItemClick)
+            .buttonStyle(PressableButtonStyle()) // Use design system press animation
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovering = hovering
+                }
+            }
             PinButton(item: item, isSelected: isSelected, clipboardManager: clipboardManager)
         }
+        .background(Color.clear)
+        .contentShape(Rectangle())
         .padding(.horizontal, DesignSystem.Spacing.md)
         .padding(.vertical, DesignSystem.Spacing.sm)
         .background(
-            isSelected ? AnyShapeStyle(preferencesManager.currentAccentColor.gradient) : AnyShapeStyle(Color.clear)
-        , in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md))
+            backgroundStyle, in: Rectangle()
+        )
         .overlay(alignment: .bottom) {
              Rectangle()
                 .fill(DesignSystem.Colors.border)
                 .frame(height: 0.5)
                 .padding(.leading, 30)
+        }
+        .overlay(
+            Rectangle()
+                .stroke(preferencesManager.currentAccentColor, lineWidth: 1)
+                .opacity(focusedRowId == item.id ? 1.0 : 0.0) // Focus ring for keyboard navigation
+        )
+        .contextMenu {
+            // Primary action - Copy to clipboard
+            Button("Copy to Clipboard") {
+                clipboardManager.copyItemToClipboard(item: item)
+            }
+            
+            Divider()
+            
+            // Pin/Unpin toggle
+            Button(item.isPinned ? "Unpin Item" : "Pin Item") {
+                clipboardManager.togglePin(for: item)
+            }
+            
+            // Edit in PopEditor
+            if case .text = item.content {
+                Button("Edit in PopEditor") {
+                    clipboardManager.openEditorWith(item: item)
+                }
+            }
+            
+            Divider()
+            
+            // Delete item
+            Button("Delete Item", role: .destructive) {
+                clipboardManager.deleteItem(with: item.id)
+            }
         }
     }
 }
@@ -382,6 +583,7 @@ private struct FooterView: View {
             Button("Quit", action: quitAction).buttonStyle(.link).font(DesignSystem.Typography.caption)
         }
         .padding(DesignSystem.Spacing.md)
-        .background(DesignSystem.Materials.ultraThin)
+        // Changed from solid background to glass effect
+        .glassEffect()
     }
 }

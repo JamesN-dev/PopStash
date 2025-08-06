@@ -23,35 +23,81 @@ struct MetadataView: View {
     }
     
     var body: some View {
-        // FIX: Apply the glass effect to the entire view for cohesion.
         VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                Picker("View", selection: $selectedTab) {
-                    ForEach(Tab.allCases) { tab in
-                        Label(tab.rawValue, systemImage: tab.systemImage).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(DesignSystem.Spacing.md)
+            // Meta text as toolbar header
+            HStack {
+                Text("Meta")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
             }
-            .background(DesignSystem.Materials.ultraThin)
+            .padding(.horizontal, DesignSystem.Spacing.lg)
+            .padding(.vertical, DesignSystem.Spacing.md + 2)
+            .glassEffect(in: Rectangle())
             
             Divider()
-
-            Group {
-                switch selectedTab {
-                case .preview:
-                    PreviewTabView(item: item)
-                case .details:
-                    DetailsTabView(item: item)
-                case .actions:
-                    ActionsTabView(item: item, manager: manager)
+            
+            // Tabs section
+            HStack(spacing: 4) {
+                ForEach(Tab.allCases) { tab in
+                    tabButton(for: tab)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(DesignSystem.Spacing.xs)
+            .glassEffect(in: Rectangle())
+            
+            Divider()
+            contentView
         }
         .glassEffect()
     }
+    
+    // MARK: - Subviews
+    
+    private func tabButton(for tab: Tab) -> some View {
+        Button(action: { selectedTab = tab }) {
+            VStack(spacing: 2) {
+                Image(systemName: tab.systemImage)
+                    .font(.system(size: 14, weight: .medium))
+                Text(tab.rawValue)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle()) // Improves hitbox
+            .background(
+                selectedTab == tab ? 
+                AnyShapeStyle(DesignSystem.Materials.regular) : 
+                AnyShapeStyle(Color.clear),
+                in: RoundedRectangle(cornerRadius: 6)
+            )
+            .overlay(
+                selectedTab == tab ?
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1) :
+                nil
+            )
+            .foregroundStyle(
+                selectedTab == tab ? Color.accentColor : Color.secondary
+            )
+        }
+        .buttonStyle(PressableButtonStyle()) // Use design system press animation
+    }
+    
+    private var contentView: some View {
+        Group {
+            switch selectedTab {
+            case .preview:
+                PreviewTabView(item: item)
+            case .details:
+                DetailsTabView(item: item)
+            case .actions:
+                ActionsTabView(item: item, manager: manager)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }
 
-// ... (Rest of the MetadataView subviews remain the same)
+// ... (Rest of the MetadataView subviews are in DesignSystem)

@@ -24,7 +24,9 @@ struct NotificationPopupView: View {
 
     var body: some View {
         collapsedNotification
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .glassEffect() // Use glass effect like other components
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
+            .shadow(color: DesignSystem.Shadow.medium.color, radius: DesignSystem.Shadow.medium.radius, x: DesignSystem.Shadow.medium.x, y: DesignSystem.Shadow.medium.y)
             .frame(width: 340, height: 72)
     }
 

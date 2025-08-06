@@ -105,6 +105,7 @@ struct PopEditor: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
+            .glassEffect() // Glass effect for bottom bar
         }
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
