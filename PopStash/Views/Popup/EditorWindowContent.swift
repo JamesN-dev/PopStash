@@ -24,6 +24,8 @@ struct EditorWindowContent: View {
                 dismissWindow(id: "textEditor")
             }
         )
-        .background(.regularMaterial)
+        .glassEffect() // Use glass effect like ClipboardHistoryView
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
+        .shadow(color: DesignSystem.Shadow.medium.color, radius: DesignSystem.Shadow.medium.radius, x: DesignSystem.Shadow.medium.x, y: DesignSystem.Shadow.medium.y)
     }
 }

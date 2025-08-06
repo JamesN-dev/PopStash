@@ -73,8 +73,44 @@ struct DesignSystem {
 // MARK: - View Extensions & Styles
 
 extension View {
+    /// Custom glass effect with backward compatibility for macOS 26
+    @ViewBuilder
+    func glassEffect(in shape: some Shape = Capsule(), interactive: Bool = false) -> some View {
+        if #available(macOS 26.0, *) {
+            self.glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
+        } else {
+            self.background {
+                shape.customGlassEffect()
+            }
+        }
+    }
+    
+    /// Convenience method for default glass effect
     func glassEffect() -> some View {
-        self.background(DesignSystem.Materials.ultraThin)
+        self.glassEffect(in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
+    }
+}
+
+extension Shape {
+    /// Custom glass effect implementation for pre-macOS 26
+    func customGlassEffect() -> some View {
+        self
+            .fill(.ultraThinMaterial)
+            .fill(
+                .linearGradient(
+                    colors: [
+                        .primary.opacity(0.08),
+                        .primary.opacity(0.05),
+                        .primary.opacity(0.01),
+                        .clear,
+                        .clear,
+                        .clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .stroke(.primary.opacity(0.2), lineWidth: 0.5)
     }
 }
 
@@ -87,6 +123,14 @@ struct IconButtonStyle: ButtonStyle {
             .clipShape(Circle())
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(DesignSystem.Animation.bouncy, value: configuration.isPressed)
+    }
+}
+
+struct PressableButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -140,6 +184,7 @@ struct PreviewTabView: View {
                 ScrollView {
                     Text(text)
                         .font(DesignSystem.Typography.mono)
+                        .textSelection(.enabled) // Make text selectable
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(DesignSystem.Spacing.md)
                 }
@@ -309,6 +354,7 @@ struct MetadataRow: View {
                 .font(DesignSystem.Typography.mono.weight(.medium))
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .multilineTextAlignment(.trailing)
+                .textSelection(.enabled) // Make metadata values selectable
         }
         .font(DesignSystem.Typography.subheadline)
     }

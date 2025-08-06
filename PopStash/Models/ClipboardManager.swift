@@ -16,6 +16,9 @@ final class ClipboardManager {
     }
     var popupManager: NotificationPopupManager
     
+    // Flag to prevent moving items to top when we copy them programmatically
+    private var isInternalCopy = false
+    
     // Clipboard monitoring
     private var lastChangeCount: Int = 0
     private var monitoringTimer: Timer?
@@ -179,6 +182,12 @@ final class ClipboardManager {
     }
     
     private func addCurrentClipboardToHistory() {
+        // Skip if this is an internal copy (user clicked an item)
+        if isInternalCopy {
+            isInternalCopy = false
+            return
+        }
+        
         let pasteboard = NSPasteboard.general
         guard let text = pasteboard.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty else { return }
@@ -196,7 +205,7 @@ final class ClipboardManager {
     private func quickPaste(index: Int) {
         guard index < history.count else { return }
         let item = history[index]
-        copyItemToClipboard(item: item)
+        copyItemToClipboardAndMoveToTop(item: item) // Quick paste should move to top
         logger.debug("Quick pasted item \(index + 1): \(item.previewText, privacy: .private)")
     }
 
@@ -355,6 +364,7 @@ final class ClipboardManager {
     }
 
     func copyItemToClipboard(item: ClipboardItem) {
+        isInternalCopy = true // Set flag to prevent moving to top
         let pb = NSPasteboard.general
         pb.clearContents()
         switch item.content {
@@ -364,9 +374,23 @@ final class ClipboardManager {
             pb.setData(data, forType: .tiff)
         }
     }
+    
+    func copyItemToClipboardAndMoveToTop(item: ClipboardItem) {
+        // First copy to clipboard
+        copyItemToClipboard(item: item)
+        // Then move to top of history
+        if let index = history.firstIndex(where: { $0.id == item.id }) {
+            let movedItem = history.remove(at: index)
+            history.insert(movedItem, at: 0)
+        }
+    }
 
     func deleteItem(with id: UUID) {
         history.removeAll { $0.id == id }
+    }
+    
+    func deleteItems(with ids: Set<UUID>) {
+        history.removeAll { ids.contains($0.id) }
     }
 
     func clearHistory() {
@@ -376,6 +400,18 @@ final class ClipboardManager {
     func togglePin(for item: ClipboardItem) {
         if let i = history.firstIndex(where: { $0.id == item.id }) {
             history[i].isPinned.toggle()
+        }
+    }
+    
+    func openEditorWith(item: ClipboardItem) {
+        if case .text(let text) = item.content {
+            popupManager.showPopup(
+                with: text,
+                onConfirm: { [weak self] editedText in 
+                    self?.finalizeEditedString(editedText)
+                },
+                onCancel: { /* Do nothing - keep original item */ }
+            )
         }
     }
 

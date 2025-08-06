@@ -1,10 +1,22 @@
 # PopStash TODO
 
+## HIGH PRIORITY BUGS
+
+[ ] **PopEditor editing bugs** - Multiple critical issues with item editing:
+  - Original item remains when editing (should be replaced)
+  - Pinned items move to top when edited (should stay in pinned position)
+  - Duplicate items created when using Enter + Save to Clipboard
+  - PopEditor treats edits as new captures instead of updating existing items
+
+[ ] **Add focus indicator for selected items** - Need visual differentiation between hover state and actual selection focus
+
+[ ] **Make MetadataView editable** - Add TextEditor functionality to allow quick text editing directly in metadata panel, similar to PopEditor behavior
+
 ## HIGH PRIORITY
 
 ### macOS Quick Look Implementation
 
-[ ] **#1 HIGH: Implement macOS Finder-style Quick Look for clipboard items**
+[x] **#1 HIGH: Implement macOS Finder-style Quick Look for clipboard items**
 
 - Status: NEW FEATURE - Replace current MetadataView with native Quick Look experience
 - Requirements:
@@ -16,21 +28,21 @@
 - Impact: Native Mac user experience, familiar interaction patterns
 - Implementation: Custom SwiftUI overlay matching system Quick Look appearance
 
-[ ] **#1 HIGH: Add keyboard navigation to clipboard list**
+[x] **#1 HIGH: Add keyboard navigation to clipboard list**
 
 - Arrow keys (up/down) to navigate clipboard items
 - Space bar to trigger Quick Look preview
 - Enter key to copy selected item
 - Option+click to open PopEditor for editing
 
-[ ] **#1 MED: Create Finder-style metadata sidebar panel**
+[x] **#1 MED: Create Finder-style metadata sidebar panel**
 
 - Show Created/Modified timestamps
 - Display content type and character count
 - Source application info (when available)
 - Pin/unpin functionality
 
-[ ] **#1 LOW: Polish clipboard list appearance**
+[x] **#1 LOW: Polish clipboard list appearance**
 
 - Add divider lines between clipboard items
 - Reduce left padding on items
@@ -52,7 +64,7 @@
 - Impact: Enhanced workflow for users who want persistent text editing
 - Implementation: Add sticky mode state, modify close behavior
 
-[ ] **#1 PROBLEM: X close button not working in clipboardview**
+[x] **REMOVED: X close button** - Decided to remove instead of fix
 
 [ ] **HIGH: Add live clipboard history update while typing**
 
@@ -147,6 +159,16 @@
 
 ## COMPLETED ITEMS
 
+[x] **Multi-selection and keyboard shortcuts** - Added Delete key to delete items, Ctrl+A to select all, Shift+Up/Down for multi-selection, visual indicators for multi-selected items. Fixed focus handling for keyboard shortcuts to work properly.
+[x] **Fixed item positioning behavior** - Added internal copy flag to prevent clipboard monitoring from moving items to top when user clicks them. Only Option+C (new items) and Return key (intentional copy) move items to top.
+[x] **Enhanced click interactions** - Added Shift+click for multi-selection, maintained Option+click for editing, regular click for copying without repositioning. Multi-selection clears when clicking without Shift. Added extended click feedback (150ms + 100ms delay) with scale animation and press state highlighting. Fixed edge clicking issues with improved contentShape.
+[x] **Improved keyboard shortcuts** - Changed Ctrl+A to Cmd+A (more Mac-like), fixed Delete key using dedicated `.onDeleteCommand` modifier (research-backed solution), added multi-selection context menu for bulk delete operations.
+[x] **Fixed multi-selection clearing** - Multi-selected items now properly clear when clicking elsewhere without holding Shift key
+[x] **Option+click visual indicator** - Added hover hint showing "⌥+click to edit" for text items to indicate the Option+click functionality
+[x] **MetadataView text made selectable** - Added .textSelection(.enabled) to preview text and metadata values for easy copying
+[x] **PopEditor glass effect styling** - Updated PopEditor, EditorWindowContent, and NotificationPopupView to use consistent glass effect styling like ClipboardHistoryView
+[x] **MAJOR FIX: Sidebar performance issue resolved** - Replaced expensive conditional view creation with persistent MetadataView, modern .slide + .scale transitions, removed .fixedSize() layout bottleneck
+[x] **Custom glass effect implementation** - Added backward-compatible glass effect for macOS 15.4 that automatically upgrades to real .glassEffect() when macOS 26 is available
 [x] PopEditor window styling fixed - Clean regularMaterial background matching ClipboardHistoryView
 [x] PopEditor titlebar added - "PopEditor" in sleek navigationTitle with toolbar styling
 [x] TextEditor made editable - Removed conflicting backgrounds/overlays blocking interaction
