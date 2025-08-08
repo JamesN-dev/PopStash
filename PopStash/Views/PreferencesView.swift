@@ -2,12 +2,35 @@ import SwiftUI
 
 struct PreferencesView: View {
     @Environment(PreferencesManager.self) private var preferences
+    @Environment(ClipboardManager.self) private var clipboardManager
+    var onBack: () -> Void = {} // Back action injected by caller
+
+    private let panelWidth: CGFloat = 320 // Target width
 
     var body: some View {
         VStack(spacing: 0) {
+            // Header
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .frame(width: 28, height: 28) // widen hitbox
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Text("Preferences")
+                    .font(DesignSystem.Typography.bodyBold)
+                Spacer()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.lg)
+            .padding(.vertical, DesignSystem.Spacing.sm)
+            .background(DesignSystem.Materials.ultraThin)
+            .overlay(Rectangle().fill(DesignSystem.Colors.border).frame(height: 0.5), alignment: .bottom)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.xl) {
-                    
+
                     PreferencesSection(title: "Hotkeys") {
                         SettingRow(label: "Enable global hotkeys") {
                             Toggle("", isOn: Binding(
@@ -23,7 +46,7 @@ struct PreferencesView: View {
                         }
                         .disabled(!preferences.enableHotkeys)
                     }
-                    
+
                     PreferencesSection(title: "Popup Behavior") {
                         SettingRow(label: "Auto-show popup on capture") {
                             Toggle("", isOn: Binding(
@@ -44,21 +67,37 @@ struct PreferencesView: View {
                     }
 
                     PreferencesSection(title: "History Management") {
+                        // Put Maximum history first and keep controls compact
                         SettingRow(label: "Maximum history") {
                             Picker("", selection: Binding(
                                 get: { preferences.maxHistoryItems },
-                                set: { preferences.maxHistoryItems = $0; preferences.savePreferences() }
+                                set: {
+                                    preferences.maxHistoryItems = $0
+                                    preferences.savePreferences()
+                                    clipboardManager.pruneToMaxHistory()
+                                }
                             )) {
                                 ForEach(preferences.maxHistoryOptions, id: \.self) { count in
                                     Text("\(count) items").tag(count)
                                 }
                             }
-                            .pickerStyle(.segmented)
+                            .pickerStyle(.menu) // dropdown style
+                            .frame(width: 220, alignment: .trailing)
                         }
                         SettingRow(label: "Clear history on quit") {
                             Toggle("", isOn: Binding(
                                 get: { preferences.clearHistoryOnQuit },
                                 set: { preferences.clearHistoryOnQuit = $0; preferences.savePreferences() }
+                            ))
+                        }
+                        SettingRow(label: "On unpin, move item to top") {
+                            Toggle("", isOn: Binding(
+                                get: { preferences.unpinMovesToTop },
+                                set: {
+                                    preferences.unpinMovesToTop = $0
+                                    preferences.savePreferences()
+                                    clipboardManager.applyOrdering()
+                                }
                             ))
                         }
                     }
@@ -84,30 +123,48 @@ struct PreferencesView: View {
                                 set: { preferences.showItemCount = $0; preferences.savePreferences() }
                             ))
                         }
+                        SettingRow(label: "Always show metadata sidebar") {
+                            Toggle("", isOn: Binding(
+                                get: { preferences.alwaysShowMetadata },
+                                set: { preferences.alwaysShowMetadata = $0; preferences.savePreferences() }
+                            ))
+                        }
+                        SettingRow(label: "Reduce animations") {
+                            Toggle("", isOn: Binding(
+                                get: { preferences.reduceAnimations },
+                                set: { preferences.reduceAnimations = $0; preferences.savePreferences() }
+                            ))
+                        }
+                        SettingRow(label: "Paste as plain text by default") {
+                            Toggle("", isOn: Binding(
+                                get: { preferences.pasteAsPlainTextByDefault },
+                                set: { preferences.pasteAsPlainTextByDefault = $0; preferences.savePreferences() }
+                            ))
+                        }
                     }
                 }
                 .padding(DesignSystem.Spacing.lg)
+                .frame(width: panelWidth, alignment: .leading) // Hard constrain content width
             }
-            
             // Footer
             HStack {
                 Button("Reset to Defaults", role: .destructive) {
                     preferences.resetToDefaults()
                 }
                 .buttonStyle(.link)
-                
+
                 Spacer()
-                
+
                 Text("PopStash v1.0")
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
             .padding(DesignSystem.Spacing.md)
             .background(DesignSystem.Materials.ultraThin)
+            .overlay(Rectangle().fill(DesignSystem.Colors.border).frame(height: 0.5), alignment: .top)
+            .frame(width: panelWidth)
         }
-        .glassEffect()
-        // FIX: Apply the correct frame width to match the main panel.
-        .frame(width: 320)
+        .frame(width: panelWidth) // Single width definition (no glass here)
     }
 }
 

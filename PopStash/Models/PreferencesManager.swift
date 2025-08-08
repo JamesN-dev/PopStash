@@ -34,6 +34,7 @@ final class PreferencesManager {
     var maxHistoryItems: Int = 100
     var autoSaveToHistory: Bool = true
     var enableImageCapture: Bool = false  // MVP is text-only
+    var unpinMovesToTop: Bool = false // NEW: controls unpin behavior
 
     // MARK: - UI Preferences
     var menuBarIcon: String = "doc.on.clipboard"
@@ -41,7 +42,15 @@ final class PreferencesManager {
     var showItemCount: Bool = true
     var enableKeyboardShortcuts: Bool = true
     var enableHoverEffect: Bool = true
+    // Global UI animation toggle
+    var reduceAnimations: Bool = false
     var lastClipboardWindowPosition: CGPoint? = nil
+    // Sidebar visibility preference
+    var alwaysShowMetadata: Bool = false
+    // Paste mode preference: when true, favor plain text when copying back
+    var pasteAsPlainTextByDefault: Bool = false
+    // UI hint preference: show or hide the “⌥+click to edit” hover hint
+    var showOptionClickHint: Bool = true
 
     // MARK: - Privacy Preferences
     var clearHistoryOnQuit: Bool = false
@@ -74,7 +83,12 @@ final class PreferencesManager {
             clearHistoryOnQuit: clearHistoryOnQuit,
             enableAnalytics: enableAnalytics,
             enableHoverEffect: enableHoverEffect,
-            windowMode: windowMode
+            reduceAnimations: reduceAnimations,
+            windowMode: windowMode,
+            unpinMovesToTop: unpinMovesToTop,
+            alwaysShowMetadata: alwaysShowMetadata,
+            pasteAsPlainTextByDefault: pasteAsPlainTextByDefault,
+            showOptionClickHint: showOptionClickHint
         )
 
         if let encoded = try? JSONEncoder().encode(preferences) {
@@ -85,9 +99,7 @@ final class PreferencesManager {
     private func loadPreferences() {
         guard let data = userDefaults.data(forKey: preferencesKey),
             let preferences = try? JSONDecoder().decode(PreferencesData.self, from: data)
-        else {
-            return  // Use defaults
-        }
+        else { return }
 
         useOptionCHotkey = preferences.useOptionCHotkey
         enableHotkeys = preferences.enableHotkeys
@@ -104,7 +116,12 @@ final class PreferencesManager {
         clearHistoryOnQuit = preferences.clearHistoryOnQuit
         enableAnalytics = preferences.enableAnalytics
         enableHoverEffect = preferences.enableHoverEffect
+    reduceAnimations = preferences.reduceAnimations ?? false
         windowMode = preferences.windowMode
+        unpinMovesToTop = preferences.unpinMovesToTop
+    alwaysShowMetadata = preferences.alwaysShowMetadata ?? false
+    pasteAsPlainTextByDefault = preferences.pasteAsPlainTextByDefault ?? false
+    showOptionClickHint = preferences.showOptionClickHint ?? true
     }
 
     // MARK: - Actions
@@ -124,6 +141,11 @@ final class PreferencesManager {
         clearHistoryOnQuit = false
         enableAnalytics = false
         enableHoverEffect = true
+    reduceAnimations = false
+        unpinMovesToTop = false
+    alwaysShowMetadata = false
+    pasteAsPlainTextByDefault = false
+    showOptionClickHint = true
 
         savePreferences()
     }
@@ -146,7 +168,12 @@ private struct PreferencesData: Codable {
     let clearHistoryOnQuit: Bool
     let enableAnalytics: Bool
     let enableHoverEffect: Bool
+    let reduceAnimations: Bool?
     let windowMode: PreferencesManager.WindowMode
+    let unpinMovesToTop: Bool // NEW
+    let alwaysShowMetadata: Bool? // NEW optional for backward compatibility
+    let pasteAsPlainTextByDefault: Bool? // NEW optional for backward compatibility
+    let showOptionClickHint: Bool? // NEW optional for backward compatibility
 }
 
 // MARK: - Convenience Extensions
@@ -165,7 +192,7 @@ extension PreferencesManager {
     var menuBarIconOptions: [String] {
         ["doc.on.clipboard", "clipboard", "doc.text", "square.and.pencil"]
     }
-    
+
     var accentColorOptions: [(name: String, color: Color)] {
         [
             ("blue", .blue),
@@ -181,7 +208,7 @@ extension PreferencesManager {
             ("indigo", .indigo)
         ]
     }
-    
+
     var currentAccentColor: Color {
         accentColorOptions.first { $0.name == accentColorName }?.color ?? .blue
     }

@@ -5,7 +5,7 @@ import AppKit
 
 /// A comprehensive design system that defines the visual language of the application.
 struct DesignSystem {
-    
+
     // MARK: - Color Palette
     struct Colors {
         static let primary = Color.accentColor
@@ -20,7 +20,7 @@ struct DesignSystem {
         static let textTertiary = Color(NSColor.tertiaryLabelColor)
         static let primaryGradient = LinearGradient(colors: [primary, primary.opacity(0.8)], startPoint: .top, endPoint: .bottom)
     }
-    
+
     // MARK: - Typography System
     struct Typography {
         static let headline = Font.system(.headline).weight(.semibold)
@@ -32,7 +32,7 @@ struct DesignSystem {
         static let caption2 = Font.system(.caption2)
         static let mono = Font.system(.body, design: .monospaced)
     }
-    
+
     // MARK: - Spacing System
     struct Spacing {
         static let xs: CGFloat = 4
@@ -41,7 +41,7 @@ struct DesignSystem {
         static let lg: CGFloat = 16
         static let xl: CGFloat = 20
     }
-    
+
     // MARK: - Corner Radius
     struct CornerRadius {
         static let sm: CGFloat = 6
@@ -49,19 +49,34 @@ struct DesignSystem {
         static let lg: CGFloat = 12
         static let circular: CGFloat = 1_000
     }
-    
+
     // MARK: - Shadows
     struct Shadow {
         static let subtle = (color: Color(NSColor.shadowColor).opacity(0.15), radius: 2.0, x: 0.0, y: 1.0)
         static let medium = (color: Color(NSColor.shadowColor).opacity(0.2), radius: 5.0, x: 0.0, y: 2.0)
     }
-    
+
     // MARK: - Animation Curves
     struct Animation {
         static let smooth = SwiftUI.Animation.easeInOut(duration: 0.25)
         static let bouncy = SwiftUI.Animation.spring(response: 0.4, dampingFraction: 0.8)
+    static let fast = SwiftUI.Animation.easeOut(duration: 0.18)
     }
-    
+
+    // MARK: - Transition Presets
+    struct Transitions {
+        /// Opacity + push from top (drops down on insert). Good default for panels/popovers.
+        static let topDrop: AnyTransition = .push(from: .top).combined(with: .opacity)
+
+        /// Subtle scale from top + fade. Great for content appearing from the menu bar.
+        static func topScale(_ scale: CGFloat = 0.96) -> AnyTransition {
+            .scale(scale: scale, anchor: .top).combined(with: .opacity)
+        }
+
+    /// BlurReplace with slight top-scale feel. macOS 14+ only.
+    static let blurDrop: AnyTransition = AnyTransition(.blurReplace).combined(with: .opacity)
+    }
+
     // MARK: - Visual Effects
     struct Materials {
         static let regular = Material.regular
@@ -84,7 +99,7 @@ extension View {
             }
         }
     }
-    
+
     /// Convenience method for default glass effect
     func glassEffect() -> some View {
         self.glassEffect(in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
@@ -141,13 +156,13 @@ struct PressableButtonStyle: ButtonStyle {
 struct PreferencesSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             Text(title)
                 .font(DesignSystem.Typography.headline)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
-            
+
             VStack(spacing: DesignSystem.Spacing.md) {
                 content
             }
@@ -160,7 +175,7 @@ struct PreferencesSection<Content: View>: View {
 struct SettingRow<Control: View>: View {
     let label: String
     @ViewBuilder let control: Control
-    
+
     var body: some View {
         HStack {
             Text(label)
@@ -176,7 +191,7 @@ struct SettingRow<Control: View>: View {
 
 struct PreviewTabView: View {
     let item: ClipboardItem
-    
+
     var body: some View {
         VStack {
             switch item.content {
@@ -190,7 +205,7 @@ struct PreviewTabView: View {
                 }
                 .background(DesignSystem.Colors.background, in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md))
                 .overlay(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md).stroke(DesignSystem.Colors.border, lineWidth: 1))
-                
+
             case .image(let data):
                 if let nsImage = NSImage(data: data) {
                     Image(nsImage: nsImage)
@@ -210,41 +225,63 @@ struct PreviewTabView: View {
 
 struct DetailsTabView: View {
     let item: ClipboardItem
-    
+
     private var sourceAppIcon: NSImage {
-        guard let bundleID = item.sourceAppBundleID,
-              let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            return NSImage(systemSymbolName: "doc", accessibilityDescription: "Default Icon")!
+        // Use original source as primary icon
+        if let bundleID = item.originalSourceAppBundleID ?? item.sourceAppBundleID,
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return NSWorkspace.shared.icon(forFile: appURL.path)
         }
-        return NSWorkspace.shared.icon(forFile: appURL.path)
+        return NSImage(systemSymbolName: "doc", accessibilityDescription: "Default Icon")!
     }
-    
+
+    private var originalSourceAppIcon: NSImage? {
+        if let bundleID = item.originalSourceAppBundleID,
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return NSWorkspace.shared.icon(forFile: appURL.path)
+        }
+        return nil
+    }
+
+    private var currentSourceAppIcon: NSImage? {
+        if let bundleID = item.sourceAppBundleID,
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return NSWorkspace.shared.icon(forFile: appURL.path)
+        }
+        return nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                
+
                 MetadataSection(title: "SOURCE") {
-                    HStack {
+                    HStack(spacing: DesignSystem.Spacing.sm) {
                         Image(nsImage: sourceAppIcon)
                             .resizable().aspectRatio(contentMode: .fit)
                             .frame(width: 24, height: 24)
-                        Text(item.sourceAppName ?? "Unknown")
+                        Text(item.originalSourceAppName ?? item.sourceAppName ?? "Unknown")
                             .font(DesignSystem.Typography.bodyBold)
                     }
                 }
-                
+
                 MetadataSection(title: "TIMESTAMPS") {
                     VStack(spacing: DesignSystem.Spacing.sm) {
                         MetadataRow(label: "Date Copied", value: item.dateAdded, format: .abbreviated)
                         MetadataRow(label: "Time Copied", value: item.dateAdded, format: .standard)
+                        if (item.originalSourceAppName ?? "") != (item.sourceAppName ?? "") || (item.originalSourceAppBundleID ?? "") != (item.sourceAppBundleID ?? "") {
+                            MetadataRow(label: "Last Edited In", value: item.sourceAppName ?? "Unknown")
+                        }
                     }
                 }
-                
+
                 if case .text(let text) = item.content {
                     MetadataSection(title: "TEXT DETAILS") {
                         VStack(spacing: DesignSystem.Spacing.sm) {
+                            MetadataRow(label: "Format", value: "Plain Text")
                             MetadataRow(label: "Characters", value: "\(text.count)")
                             MetadataRow(label: "Words", value: "\(text.split(whereSeparator: \.isWhitespace).count)")
+                            MetadataRow(label: "Lines", value: "\(text.split(separator: "\n").count)")
                         }
                     }
                 } else if case .image(let data) = item.content, let nsImage = NSImage(data: data) {
@@ -264,7 +301,7 @@ struct DetailsTabView: View {
 struct ActionsTabView: View {
     let item: ClipboardItem
     let manager: ClipboardManager
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.md) {
             ActionButton(
@@ -274,7 +311,7 @@ struct ActionsTabView: View {
             ) {
                 manager.togglePin(for: item)
             }
-            
+
             ActionButton(
                 title: "Delete Item",
                 systemImage: "trash.fill",
@@ -283,7 +320,7 @@ struct ActionsTabView: View {
             ) {
                 // manager.deleteItem(item)
             }
-            
+
             Spacer()
         }
         .padding(DesignSystem.Spacing.lg)
@@ -296,7 +333,7 @@ struct ActionButton: View {
     let color: Color
     var role: ButtonRole? = nil
     let action: () -> Void
-    
+
     var body: some View {
         Button(role: role, action: action) {
             Label(title, systemImage: systemImage)
@@ -329,17 +366,17 @@ struct MetadataSection<Content: View>: View {
 struct MetadataRow: View {
     let label: String
     let value: String
-    
+
     init(label: String, value: String) {
         self.label = label
         self.value = value
     }
-    
+
     init(label: String, value: Date, format: Date.FormatStyle.DateStyle) {
         self.label = label
         self.value = value.formatted(date: format, time: .omitted)
     }
-    
+
     init(label: String, value: Date, format: Date.FormatStyle.TimeStyle) {
         self.label = label
         self.value = value.formatted(date: .omitted, time: format)

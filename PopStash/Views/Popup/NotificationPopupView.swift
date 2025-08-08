@@ -92,13 +92,14 @@ struct NotificationPopupView: View {
 struct NotificationPopupOverlay: View {
     @Bindable var popupManager: NotificationPopupManager
     @State private var isDragging = false // Track drag state for styling
+    @Environment(PreferencesManager.self) private var preferencesManager
 
     var body: some View {
         if popupManager.isShowing {
             NotificationPopupView(popupManager: popupManager, isDragging: isDragging)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.9)),
-                    removal: .move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.95))
+                .transition(preferencesManager.reduceAnimations ? .identity : .asymmetric(
+                    insertion: DesignSystem.Transitions.topScale(0.96),
+                    removal: DesignSystem.Transitions.topDrop
                 ))
                 .gesture(
                     // Higher minimum distance to avoid interfering with text editing

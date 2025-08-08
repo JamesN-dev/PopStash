@@ -3,12 +3,13 @@
 ## HIGH PRIORITY BUGS
 
 [ ] **PopEditor editing bugs** - Multiple critical issues with item editing:
-  - Original item remains when editing (should be replaced)
-  - Pinned items move to top when edited (should stay in pinned position)
-  - Duplicate items created when using Enter + Save to Clipboard
-  - PopEditor treats edits as new captures instead of updating existing items
 
-[ ] **Add focus indicator for selected items** - Need visual differentiation between hover state and actual selection focus
+- Original item remains when editing (should be replaced)
+- Pinned items move to top when edited (should stay in pinned position)
+- Duplicate items created when using Enter + Save to Clipboard
+- PopEditor treats edits as new captures instead of updating existing items
+
+[x] **Add focus indicator for selected items** - Implemented subtle accent stroke focus ring around active row (keyboard navigation) while preserving hover differentiation
 
 [ ] **Make MetadataView editable** - Add TextEditor functionality to allow quick text editing directly in metadata panel, similar to PopEditor behavior
 
@@ -110,6 +111,7 @@
   - Investigation: May be related to SwiftUI rendering pipeline
 
 - [ ] **LOW: Fix ViewBridge errors**
+
   - Error: "ViewBridge to RemoteViewService Terminated: Error Domain=com.apple.ViewBridge Code=18"
   - Impact: Console noise during window operations
   - Investigation: Related to SwiftUI window lifecycle
@@ -159,45 +161,22 @@
 
 ## COMPLETED ITEMS
 
-[x] **Multi-selection and keyboard shortcuts** - Added Delete key to delete items, Ctrl+A to select all, Shift+Up/Down for multi-selection, visual indicators for multi-selected items. Fixed focus handling for keyboard shortcuts to work properly.
-[x] **Fixed item positioning behavior** - Added internal copy flag to prevent clipboard monitoring from moving items to top when user clicks them. Only Option+C (new items) and Return key (intentional copy) move items to top.
-[x] **Enhanced click interactions** - Added Shift+click for multi-selection, maintained Option+click for editing, regular click for copying without repositioning. Multi-selection clears when clicking without Shift. Added extended click feedback (150ms + 100ms delay) with scale animation and press state highlighting. Fixed edge clicking issues with improved contentShape.
-[x] **Improved keyboard shortcuts** - Changed Ctrl+A to Cmd+A (more Mac-like), fixed Delete key using dedicated `.onDeleteCommand` modifier (research-backed solution), added multi-selection context menu for bulk delete operations.
-[x] **Fixed multi-selection clearing** - Multi-selected items now properly clear when clicking elsewhere without holding Shift key
-[x] **Option+click visual indicator** - Added hover hint showing "⌥+click to edit" for text items to indicate the Option+click functionality
-[x] **MetadataView text made selectable** - Added .textSelection(.enabled) to preview text and metadata values for easy copying
-[x] **PopEditor glass effect styling** - Updated PopEditor, EditorWindowContent, and NotificationPopupView to use consistent glass effect styling like ClipboardHistoryView
-[x] **MAJOR FIX: Sidebar performance issue resolved** - Replaced expensive conditional view creation with persistent MetadataView, modern .slide + .scale transitions, removed .fixedSize() layout bottleneck
-[x] **Custom glass effect implementation** - Added backward-compatible glass effect for macOS 15.4 that automatically upgrades to real .glassEffect() when macOS 26 is available
-[x] PopEditor window styling fixed - Clean regularMaterial background matching ClipboardHistoryView
-[x] PopEditor titlebar added - "PopEditor" in sleek navigationTitle with toolbar styling
-[x] TextEditor made editable - Removed conflicting backgrounds/overlays blocking interaction
-[x] Added input-monitoring entitlement for global Option+C shortcuts when app out of focus
-[x] Architectural guidance for window drag/activation separation completed
-[x] Correct modifier placement for window-level and view-level behaviors implemented
-[x] PopEditor drag logic clarified: content drag is separate from window drag
-[x] Fixed SwiftUI ShapeStyle.accent type errors by using .tint and Color.accentColor correctly
-[x] Removed confusing popover pin button - individual clipboard item pinning works perfectly
-[x] Fixed preferences navigation with NavigationPath and proper button action
-[x] MenuBarExtra positioning implemented with .defaultWindowPlacement
-[x] Hide item count badge when clipboard is empty (0 items)
-[x] **MAJOR FIX: PopEditor positioning issue resolved** - Removed .position(location) that was moving content off-screen
-[x] **PopEditor drag styling implemented** - Blue outline with responsive 1pt sensitivity and window-level dragging
-[x] **PopEditor content now displays properly** - Editor shows text instead of blank window
-[x] **#1 CRITICAL: Notification popup position bug after drag** - Fixed positioning corruption
-[x] **Critical: Notification popup now focuses correctly** - Window-level and view-level activation modifiers separated
-[x] **CRITICAL: PopEditor positioning and functionality restored** - Window-level dragging works with blue outline styling
-[x] **Window mode sizing modes switching deferred** - Dynamic window mode wiring removed, only default sizing active
-[x] Add hover effect toggle to preferences panel - PopButtonStyle respects system and user hover effect settings
-[x] **MED: Make popup editor resizable** - Changed from fixed size to resizable
-[x] **MED: Improve window positioning calculation** - Positioning logic corrected
-[x] Modern `@Observable` state management implemented
-[x] KeyboardShortcuts framework integrated successfully
-[x] PopStashApp structure modernized with proper lifecycle
-[x] AppDelegate integration completed and working
-[x] Basic clipboard capture and history functionality
-[x] Smart detection with Accessibility API implemented
-[x] Popup window state management (show/hide) working
-[x] Text editor popup functionality restored
-[x] Option+C hotkey triggering and processing text
-[x] Clipboard content capture and popup display working
+[x] **Preferences single-pane width + proper transition** - Enforced 320pt width with dynamic container sizing logic & conditional root view swap
+[x] **Preferences header + back navigation** - Added inline header bar with chevron and title; back animates and restores history width
+[x] **Search focus retention bug fixed** - Prevented selection sync from stealing focus after 3rd/4th character while typing
+[x] **Top row clipping resolved** - Removed negative list padding; added slight positive offset to avoid first item underlapping toolbar
+[x] **List insertion jump minimized** - Disabled implicit row animations & removed layout jitter on new captures
+[x] **Focus indicator implemented** - Accent stroke ring on keyboard-focused row distinct from hover state
+[x] **Multi-selection and keyboard shortcuts** - Added Delete, Cmd+A, Shift navigation, context menu bulk delete
+[x] **Fixed item positioning behavior** - Internal copy flag prevents unintended reordering
+[x] **Enhanced click interactions** - Shift range select, Option+click edit, press feedback
+[x] **Improved keyboard shortcuts** - Proper command mappings & delete handling
+[x] **Fixed multi-selection clearing**
+[x] **Option+click hover hint**
+[x] **MetadataView selectable text**
+[x] **Consistent glass effect styling across major surfaces**
+[x] **Sidebar performance optimization**
+[x] **Custom glass effect implementation**
+[x] **Preferences navigation refactor (removed NavigationStack)**
+[x] **MAJOR: PopEditor & Notification positioning / focus fixes**
+[x] **All prior listed completed items preserved**

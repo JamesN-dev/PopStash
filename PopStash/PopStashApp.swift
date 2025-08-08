@@ -28,39 +28,80 @@ struct PopStashApp: App {
     @State private var preferencesManager = PreferencesManager()
     @State private var windowManager = WindowManager()
     @State private var showMetadata = false
+    @State private var sidebarAllocated = false // decouple window width from sidebar visibility to avoid flash on close
+    @State private var contentMounted = false   // drive initial open transition of content
+
+    // Compute dynamic width: if we're showing root history view use sidebar state, otherwise (preferences) force compact width
+    private var mainWindowWidth: CGFloat {
+        navigationPath.isEmpty ? (sidebarAllocated ? 600 : 320) : 320
+    }
 
     var body: some Scene {
         // MenuBarExtra with NavigationStack - (clipboard and preferences)
         MenuBarExtra {
-            NavigationStack(path: $navigationPath) {
-                ClipboardHistoryView(
-                    showMetadata: $showMetadata,
-                    closePopover: { 
-                        // For MenuBarExtra, the best approach is to let the system handle it
-                        // We can't reliably close it programmatically without side effects
-                        // Users can use ESC key or click outside to close
-                    },
-                    openPreferences: {
-                        navigationPath.append("preferences")
-                    }
-                )
-                .environment(clipboardManager)
-                .environment(preferencesManager)
-                .navigationDestination(for: String.self) { destination in
-                    if destination == "preferences" {
-                        PreferencesView()
+            // Show only one root view at a time so sizing recalculates correctly
+            Group {
+                if contentMounted {
+                    Group {
+                        if navigationPath.isEmpty {
+                            ClipboardHistoryView(
+                                showMetadata: $showMetadata,
+                                closePopover: {},
+                                openPreferences: {
+                                    withAnimation(DesignSystem.Animation.smooth) {
+                                        showMetadata = false
+                                        navigationPath.append("preferences")
+                                    }
+                                }
+                            )
+                            .environment(clipboardManager)
                             .environment(preferencesManager)
+                            .transition(preferencesManager.reduceAnimations ? .identity : DesignSystem.Transitions.topScale(0.96))
+                        } else {
+                            PreferencesView(onBack: {
+                                if preferencesManager.reduceAnimations {
+                                    navigationPath.removeLast()
+                                } else {
+                                    withAnimation(DesignSystem.Animation.smooth) { navigationPath.removeLast() }
+                                }
+                            })
+                                .environment(preferencesManager)
+                                .environment(clipboardManager)
+                                .transition(preferencesManager.reduceAnimations ? .identity : DesignSystem.Transitions.topScale(0.96))
+                        }
                     }
                 }
             }
+            .animation(preferencesManager.reduceAnimations ? .none : DesignSystem.Animation.smooth, value: navigationPath) // Smooth size & view swap
+            .animation(preferencesManager.reduceAnimations ? .none : DesignSystem.Animation.smooth, value: showMetadata)
+            .animation(preferencesManager.reduceAnimations ? .none : DesignSystem.Animation.smooth, value: sidebarAllocated)
+            .glassEffect() // Single consistent background & clipping
             .tint(preferencesManager.currentAccentColor)
             .onAppear {
                 // Setup clipboard manager synchronously when the view appears
                 clipboardManager.popupManager.setWindowManager(windowManager)
+                clipboardManager.setPreferencesManager(preferencesManager)
                 logger.info("Clipboard manager setup complete")
+                // Pre-allocate sidebar width if metadata is always shown to avoid width jump on first open
+                if preferencesManager.alwaysShowMetadata {
+                    sidebarAllocated = true
+                    showMetadata = true
+                }
+                // Drive initial content transition immediately (no delay); use faster curve for snappier feel
+                if preferencesManager.reduceAnimations {
+                    contentMounted = true
+                } else {
+                    withAnimation(DesignSystem.Animation.fast) { contentMounted = true }
+                }
             }
-            // Dynamic window size based on metadata panel state
-            .frame(width: showMetadata ? 600 : 320, height: 550)
+            // Dynamic window size based on metadata panel state OR preferences navigation
+            .frame(width: mainWindowWidth, height: 550)
+            .onDisappear { // Reset state when panel closes so next open shows clipboard history
+                navigationPath = NavigationPath()
+                showMetadata = false
+                sidebarAllocated = false
+                contentMounted = false
+            }
         } label: {
             // Dynamic menu bar label
             HStack(spacing: 4) {
@@ -72,7 +113,7 @@ struct PopStashApp: App {
             }
         }
         .menuBarExtraStyle(.window)
-        .defaultWindowPlacement { windowProxy, context in
+    .defaultWindowPlacement { windowProxy, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = windowProxy.sizeThatFits(.unspecified)
             // Position in top-right corner, just below menu bar
@@ -104,6 +145,20 @@ struct PopStashApp: App {
                 windowManager.openNotificationWindow()
             } else {
                 windowManager.closeNotificationWindow()
+            }
+        }
+        .onChange(of: showMetadata) { old, new in
+            // Expand immediately on open; collapse after sidebar transition completes to avoid list flash
+            if preferencesManager.reduceAnimations {
+                sidebarAllocated = new
+            } else {
+                if new {
+                    withAnimation(DesignSystem.Animation.smooth) { sidebarAllocated = true }
+                } else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                        withAnimation(DesignSystem.Animation.smooth) { sidebarAllocated = false }
+                    }
+                }
             }
         }
 
