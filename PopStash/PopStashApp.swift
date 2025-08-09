@@ -141,11 +141,9 @@ struct PopStashApp: App {
             }
         }
         .onChange(of: clipboardManager.popupManager.isShowing) { oldValue, isShowing in
-            if isShowing {
-                windowManager.openNotificationWindow()
-            } else {
-                windowManager.closeNotificationWindow()
-            }
+            print("🚨 DEBUG: onChange triggered - oldValue: \(oldValue), newValue: \(isShowing)")
+            // Note: Panel-based notifications handle their own window management
+            // No need to call windowManager methods anymore
         }
         .onChange(of: showMetadata) { old, new in
             // Expand immediately on open; collapse after sidebar transition completes to avoid list flash
@@ -162,26 +160,8 @@ struct PopStashApp: App {
             }
         }
 
-        // Popup notification window
-        Window("Notification", id: "notification") {
-            NotificationPopupOverlay(popupManager: clipboardManager.popupManager)
-                .environment(preferencesManager)
-        }
-        .windowStyle(.plain)
-        .windowLevel(.floating)
-        .windowBackgroundDragBehavior(.disabled)
-        .windowResizability(.contentMinSize)
-        .restorationBehavior(.disabled)
-        .defaultWindowPlacement { windowProxy, context in
-            let displayBounds = context.defaultDisplay.visibleRect
-            let size = windowProxy.sizeThatFits(.unspecified)
-            let position = CGPoint(
-                x: displayBounds.maxX - size.width - 20,
-                y: displayBounds.minY + 60
-            )
-            logger.debug("SwiftUI positioning notification at: \(position)")
-            return WindowPlacement(position, size: size)
-        }
+        // Note: Notification popup now uses NSPanel directly via NotificationPanelManager
+        // No need for SwiftUI Window scene anymore
 
         Window("PopEditor", id: "textEditor") {
             EditorWindowContent(popupManager: clipboardManager.popupManager)

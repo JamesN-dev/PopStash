@@ -14,7 +14,7 @@ final class ClipboardManager {
     var history: [ClipboardItem] = [] {
         didSet { saveHistory() }
     }
-    var popupManager: NotificationPopupManager
+    var popupManager: NotificationPanelManager
     // Injected preferences (optional to avoid tight coupling in init)
     var preferencesManager: PreferencesManager?
     // ID of most recently inserted/added history item (not persisted)
@@ -36,7 +36,7 @@ final class ClipboardManager {
 
     init() {
         // Initialize popupManager without back-reference first
-        self.popupManager = NotificationPopupManager()
+        self.popupManager = NotificationPanelManager()
         loadHistory()
         setupKeyboardShortcuts()
         startClipboardMonitoring()
@@ -45,6 +45,8 @@ final class ClipboardManager {
     // Allow app to inject preferences after creation
     func setPreferencesManager(_ preferences: PreferencesManager) {
         self.preferencesManager = preferences
+        // Also pass to popup manager so it can inject environment objects
+        self.popupManager.setPreferencesManager(preferences)
     }
 
     // Public: Re-apply ordering (used when preferences change)
@@ -137,42 +139,7 @@ final class ClipboardManager {
             self?.captureCurrentClipboard()
         }
 
-        // Quick paste shortcuts
-        KeyboardShortcuts.onKeyUp(for: .quickPaste1) { [weak self] in
-            self?.quickPaste(index: 0)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste2) { [weak self] in
-            self?.quickPaste(index: 1)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste3) { [weak self] in
-            self?.quickPaste(index: 2)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste4) { [weak self] in
-            self?.quickPaste(index: 3)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste5) { [weak self] in
-            self?.quickPaste(index: 4)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste6) { [weak self] in
-            self?.quickPaste(index: 5)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste7) { [weak self] in
-            self?.quickPaste(index: 6)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste8) { [weak self] in
-            self?.quickPaste(index: 7)
-        }
-
-        KeyboardShortcuts.onKeyUp(for: .quickPaste9) { [weak self] in
-            self?.quickPaste(index: 8)
-        }
+        // Quick paste shortcuts removed - not great shortcuts
     }
 
     // MARK: - App Store Safe Clipboard Monitoring
@@ -216,12 +183,7 @@ final class ClipboardManager {
         addToHistory(.text(text))
     }
 
-    private func quickPaste(index: Int) {
-        guard index < history.count else { return }
-        let item = history[index]
-        copyItemToClipboardAndMoveToTop(item: item) // Quick paste should move to top
-        logger.debug("Quick pasted item \(index + 1): \(item.previewText, privacy: .private)")
-    }
+    // Quick paste function removed - shortcuts were not great
 
     // --- THIS IS THE NEW FUNCTION THAT WAS MISSING ---
     // This is the main function called by the hotkey. It contains the logic
@@ -409,7 +371,7 @@ final class ClipboardManager {
         pb.clearContents()
         switch item.content {
         case .text(let text):
-            if asPlainText ?? (preferencesManager?.pasteAsPlainTextByDefault ?? false) {
+            if asPlainText ?? false {
                 pb.setString(text, forType: .string) // plain text only
             } else {
                 // Current behavior: write standard string type

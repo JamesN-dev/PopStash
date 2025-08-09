@@ -135,10 +135,10 @@ struct PreferencesView: View {
                                 set: { preferences.reduceAnimations = $0; preferences.savePreferences() }
                             ))
                         }
-                        SettingRow(label: "Paste as plain text by default") {
+                        SettingRow(label: "Show Option+click hint") {
                             Toggle("", isOn: Binding(
-                                get: { preferences.pasteAsPlainTextByDefault },
-                                set: { preferences.pasteAsPlainTextByDefault = $0; preferences.savePreferences() }
+                                get: { preferences.showOptionClickHint },
+                                set: { preferences.showOptionClickHint = $0; preferences.savePreferences() }
                             ))
                         }
                     }

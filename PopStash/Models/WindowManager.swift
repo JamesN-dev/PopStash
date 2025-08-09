@@ -22,18 +22,8 @@ final class WindowManager {
         self.dismissWindow = dismissWindow
     }
     
-    func openNotificationWindow() {
-        logger.debug("Opening notification window")
-        dismissWindow?("notification")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.openWindow?("notification")
-        }
-    }
-    
-    func closeNotificationWindow() {
-        logger.debug("Closing notification window")
-        dismissWindow?("notification")
-    }
+    // Note: Notification popup now uses NSPanel directly
+    // No need for notification window management methods
     
     func openEditorWindow() {
         logger.debug("Opening editor window")

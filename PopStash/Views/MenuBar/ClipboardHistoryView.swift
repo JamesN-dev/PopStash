@@ -17,6 +17,8 @@ struct ClipboardHistoryView: View {
     @FocusState private var focusedRowId: UUID?
     @FocusState private var isViewFocused: Bool // For keyboard shortcuts
     @State private var showPlainToast = false
+    @State private var showCopyToast = false
+    @State private var copyToastMessage = ""
 
     var closePopover: () -> Void = {}
     var openPreferences: () -> Void = {}
@@ -77,6 +79,18 @@ struct ClipboardHistoryView: View {
                         focusedRowId = item.id
                         // Only copy to clipboard, don't move to top
                         clipboardManager.copyItemToClipboard(item: item)
+                        
+                        // Show toast with appropriate message
+                        if case .text = item.content {
+                            copyToastMessage = "Copied as Plain Text"
+                        } else {
+                            copyToastMessage = "Copied"
+                        }
+                        withAnimation(.easeInOut(duration: 0.15)) { showCopyToast = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            withAnimation(.easeInOut(duration: 0.2)) { showCopyToast = false }
+                        }
+                        
                         closePopover()
                     },
                     onItemShiftClick: { item in
@@ -182,7 +196,19 @@ struct ClipboardHistoryView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { showPlainToast = false }
                 }
             } else {
-                // Plain Return: copy with original formatting
+                // Plain Return: copy with original formatting and show toast
+                if let selectedId = selectedItemId,
+                   let selected = filteredHistory.first(where: { $0.id == selectedId }) {
+                    if case .text = selected.content {
+                        copyToastMessage = "Copied as Plain Text"
+                    } else {
+                        copyToastMessage = "Copied"
+                    }
+                    withAnimation(.easeInOut(duration: 0.15)) { showCopyToast = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showCopyToast = false }
+                    }
+                }
                 copySelectedAndClose()
             }
             return .handled
@@ -228,7 +254,7 @@ struct ClipboardHistoryView: View {
             }
         }
         .overlay(alignment: .top) {
-        if showPlainToast {
+            if showPlainToast {
                 Text("Copied as Plain Text")
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
@@ -236,7 +262,17 @@ struct ClipboardHistoryView: View {
                     .background(DesignSystem.Materials.regular, in: Capsule())
                     .overlay(Capsule().strokeBorder(Color.gray.opacity(0.4), lineWidth: 1))
                     .foregroundStyle(.secondary)
-            .transition(preferencesManager.reduceAnimations ? .identity : DesignSystem.Transitions.topDrop)
+                    .transition(preferencesManager.reduceAnimations ? .identity : DesignSystem.Transitions.topDrop)
+                    .padding(.top, 6)
+            } else if showCopyToast {
+                Text(copyToastMessage)
+                    .font(.system(size: 11, weight: .semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(DesignSystem.Materials.regular, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.gray.opacity(0.4), lineWidth: 1))
+                    .foregroundStyle(.secondary)
+                    .transition(preferencesManager.reduceAnimations ? .identity : DesignSystem.Transitions.topDrop)
                     .padding(.top, 6)
             }
         }
@@ -300,8 +336,8 @@ struct ClipboardHistoryView: View {
     private func copySelectedAndClose(asPlainText: Bool = false) {
         guard let selectedId = selectedItemId,
               let selected = filteredHistory.first(where: { $0.id == selectedId }) else { return }
-        // Copy and move to top, then close panel
-        clipboardManager.copyItemToClipboardAndMoveToTop(item: selected, asPlainText: asPlainText)
+        // Only copy to clipboard, don't move to top (consistent with click behavior)
+        clipboardManager.copyItemToClipboard(item: selected, asPlainText: asPlainText)
         closePopover()
     }
 
@@ -595,7 +631,7 @@ private struct ClipboardRowView: View {
                             .transition(.opacity.combined(with: .scale(scale: 0.9)))
                     }
 
-                    ShortcutView(index: index, isSelected: isSelected)
+                    // Option+click hint removed shortcut display since Option+1-9 shortcuts were removed
                 }
                 .contentShape(Rectangle()) // Make entire area clickable
             }
@@ -639,7 +675,7 @@ private struct ClipboardRowView: View {
         .contextMenu {
             // Primary action - Copy to clipboard
             Button("Copy to Clipboard") {
-                clipboardManager.copyItemToClipboard(item: item, asPlainText: preferencesManager.pasteAsPlainTextByDefault)
+                clipboardManager.copyItemToClipboard(item: item)
             }
 
             Button("Copy as Plain Text") {
@@ -699,18 +735,7 @@ private struct ClipboardItemContentView: View {
     }
 }
 
-private struct ShortcutView: View {
-    let index: Int
-    let isSelected: Bool
-
-    var body: some View {
-        if index < 9 {
-            Text("⌥\(index + 1)")
-                .font(DesignSystem.Typography.caption2)
-                .foregroundStyle(isSelected ? .white.opacity(0.7) : DesignSystem.Colors.textTertiary)
-        }
-    }
-}
+// ShortcutView removed - Option+1-9 shortcuts were not great shortcuts
 
 private struct PinButton: View {
     let item: ClipboardItem

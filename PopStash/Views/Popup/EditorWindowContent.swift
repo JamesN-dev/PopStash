@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EditorWindowContent: View {
-    @Bindable var popupManager: NotificationPopupManager
+    @Bindable var popupManager: NotificationPanelManager
     @Environment(\.dismissWindow) private var dismissWindow
     
     var body: some View {

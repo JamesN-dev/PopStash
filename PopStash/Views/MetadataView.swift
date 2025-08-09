@@ -52,23 +52,6 @@ struct MetadataView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
-                // Default-mode chip on the right (what Return will do)
-                if case .text = item.content {
-                    let isPlain = preferences.pasteAsPlainTextByDefault
-                    Text(isPlain ? "Default: Plain" : "Default: Rich")
-                        .font(.system(size: 10, weight: .semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(DesignSystem.Materials.regular, in: Capsule())
-                        .overlay(
-                            Capsule().strokeBorder(
-                                (isPlain ? Color.gray.opacity(0.5) : Color.accentColor.opacity(0.5)),
-                                lineWidth: 1
-                            )
-                        )
-                        .foregroundStyle(isPlain ? .secondary : Color.accentColor)
-                        .help("Press Return to copy using the default mode. Option+Return copies as Plain.")
-                }
             }
             .padding(.horizontal, DesignSystem.Spacing.lg)
             .padding(.vertical, DesignSystem.Spacing.md + 2)

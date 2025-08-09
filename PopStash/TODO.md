@@ -15,6 +15,19 @@
 
 ## HIGH PRIORITY
 
+### Rich Text Implementation
+
+[ ] **HIGH: Add rich text format tracking and dynamic toast messages**
+
+- Status: FOUNDATION NEEDED - Currently all text is stored as plain text String
+- Requirements:
+  - Add property to ClipboardItem to track original format (rich vs plain)
+  - Update clipboard capture to detect and preserve rich text formatting
+  - Modify toast messages to show actual format: "Copied as Rich Text" vs "Copied as Plain Text"
+  - Ensure Opt+click still forces plain text regardless of original format
+- Current: Both regular and Opt+click show "Copied as Plain Text" since rich text not implemented
+- Implementation: Extend ClipContent enum or add format tracking property
+
 ### macOS Quick Look Implementation
 
 [x] **#1 HIGH: Implement macOS Finder-style Quick Look for clipboard items**
@@ -179,4 +192,7 @@
 [x] **Custom glass effect implementation**
 [x] **Preferences navigation refactor (removed NavigationStack)**
 [x] **MAJOR: PopEditor & Notification positioning / focus fixes**
+[x] **Dynamic copy toast notifications** - Added toast feedback for regular clicks showing "Copied as Plain Text" or "Copied" for images, with separate toast for Opt+click plain text copying
+[x] **Removed pasteAsPlainTextByDefault preference** - Simplified UX by removing preference setting and default mode badge from MetadataView, users now have direct control via Opt+click
+[x] **Streamlined MetadataView badges** - Kept item type badge (Plain/Image) showing what content IS, removed confusing default paste mode badge
 [x] **All prior listed completed items preserved**

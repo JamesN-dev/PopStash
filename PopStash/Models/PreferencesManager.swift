@@ -47,8 +47,7 @@ final class PreferencesManager {
     var lastClipboardWindowPosition: CGPoint? = nil
     // Sidebar visibility preference
     var alwaysShowMetadata: Bool = false
-    // Paste mode preference: when true, favor plain text when copying back
-    var pasteAsPlainTextByDefault: Bool = false
+
     // UI hint preference: show or hide the “⌥+click to edit” hover hint
     var showOptionClickHint: Bool = true
 
@@ -87,7 +86,6 @@ final class PreferencesManager {
             windowMode: windowMode,
             unpinMovesToTop: unpinMovesToTop,
             alwaysShowMetadata: alwaysShowMetadata,
-            pasteAsPlainTextByDefault: pasteAsPlainTextByDefault,
             showOptionClickHint: showOptionClickHint
         )
 
@@ -120,7 +118,6 @@ final class PreferencesManager {
         windowMode = preferences.windowMode
         unpinMovesToTop = preferences.unpinMovesToTop
     alwaysShowMetadata = preferences.alwaysShowMetadata ?? false
-    pasteAsPlainTextByDefault = preferences.pasteAsPlainTextByDefault ?? false
     showOptionClickHint = preferences.showOptionClickHint ?? true
     }
 
@@ -144,7 +141,6 @@ final class PreferencesManager {
     reduceAnimations = false
         unpinMovesToTop = false
     alwaysShowMetadata = false
-    pasteAsPlainTextByDefault = false
     showOptionClickHint = true
 
         savePreferences()
@@ -172,7 +168,6 @@ private struct PreferencesData: Codable {
     let windowMode: PreferencesManager.WindowMode
     let unpinMovesToTop: Bool // NEW
     let alwaysShowMetadata: Bool? // NEW optional for backward compatibility
-    let pasteAsPlainTextByDefault: Bool? // NEW optional for backward compatibility
     let showOptionClickHint: Bool? // NEW optional for backward compatibility
 }
 

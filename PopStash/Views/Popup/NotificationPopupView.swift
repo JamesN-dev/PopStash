@@ -13,11 +13,12 @@ import OSLog
 private let logger = Logger(subsystem: "com.popstash.popup", category: "view")
 
 struct NotificationPopupView: View {
-    @Bindable var popupManager: NotificationPopupManager
+    @Bindable var popupManager: NotificationPanelManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(PreferencesManager.self) private var preferencesManager
     let isDragging: Bool // Received from parent overlay
 
-    init(popupManager: NotificationPopupManager, isDragging: Bool) {
+    init(popupManager: NotificationPanelManager, isDragging: Bool) {
         self.popupManager = popupManager
         self.isDragging = isDragging
     }
@@ -26,6 +27,10 @@ struct NotificationPopupView: View {
         collapsedNotification
             .glassEffect() // Use glass effect like other components
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg)
+                    .stroke(preferencesManager.currentAccentColor, lineWidth: 1)
+            )
             .shadow(color: DesignSystem.Shadow.medium.color, radius: DesignSystem.Shadow.medium.radius, x: DesignSystem.Shadow.medium.x, y: DesignSystem.Shadow.medium.y)
             .frame(width: 340, height: 72)
     }
@@ -38,11 +43,11 @@ struct NotificationPopupView: View {
                 // Animated clipboard icon
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor.opacity(0.15))
+                        .fill(preferencesManager.currentAccentColor.opacity(0.15))
                         .frame(width: 36, height: 36)
                     Image(systemName: "doc.on.clipboard.fill")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(preferencesManager.currentAccentColor)
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
@@ -73,7 +78,7 @@ struct NotificationPopupView: View {
         .buttonStyle(PopButtonStyle())
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.accentColor, lineWidth: isDragging ? 2 : 0)
+                .stroke(preferencesManager.currentAccentColor, lineWidth: isDragging ? 2 : 0)
         )
         .allowsWindowActivationEvents()
     }
@@ -90,7 +95,7 @@ struct NotificationPopupView: View {
 // MARK: - NotificationPopupOverlay
 // This wrapper ensures the popup appears in a floating context
 struct NotificationPopupOverlay: View {
-    @Bindable var popupManager: NotificationPopupManager
+    @Bindable var popupManager: NotificationPanelManager
     @State private var isDragging = false // Track drag state for styling
     @Environment(PreferencesManager.self) private var preferencesManager
 

@@ -8,7 +8,8 @@ struct DesignSystem {
 
     // MARK: - Color Palette
     struct Colors {
-        static let primary = Color.accentColor
+        // Note: Use @Environment(\.accentColor) in views instead of this static reference
+        static let primary = Color.accentColor // TODO: Migrate to environment value
         static let success = Color(NSColor.systemGreen)
         static let warning = Color(NSColor.systemYellow)
         static let error = Color(NSColor.systemRed)
