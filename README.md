@@ -4,35 +4,35 @@ A powerful clipboard manager for macOS that keeps your copy history organized an
 
 ## Features
 
-### 🎯 Core Functionality
+### Core Functionality
 
 - **Clipboard History** - Automatically saves everything you copy
 - **Quick Access** - Global hotkey to instantly view your clipboard history
 - **Smart Search** - Find any copied item with real-time search
 - **Pin Important Items** - Keep frequently used content at the top
 
-### 🎨 Modern Interface
+### Modern Interface
 
 - **Glass Effect Design** - Beautiful translucent interface that fits macOS
 - **Dual Panel Layout** - Main clipboard view with optional metadata sidebar
 - **Keyboard Navigation** - Full keyboard support with arrow keys and shortcuts
 - **Multi-Selection** - Select and manage multiple items at once
 
-### 📝 Content Support
+### Content Support
 
 - **Text Snippets** - Copy and manage text of any length
 - **Image Support** - Preview and manage copied images
 - **Rich Metadata** - View source app, timestamps, and content details
 - **Quick Preview** - See content without leaving the clipboard manager
 
-### ⚡ Productivity Features
+### Productivity Features
 
 - **Instant Copy** - Click any item to copy it back to clipboard
 - **Keyboard Shortcuts** - Option+1-9 for quick access to recent items
 - **PopEditor Integration** - Edit text items in a dedicated editor window
 - **Smart Organization** - Pinned items stay at top, recent items below
 
-### ⚙️ Customization
+### Customization
 
 - **Accent Colors** - Choose from multiple color themes
 - **Item Count Display** - Show/hide clipboard item counter
