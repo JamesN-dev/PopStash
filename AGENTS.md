@@ -12,7 +12,7 @@
 - **Imports**: Foundation/AppKit first, SwiftUI, then third-party (KeyboardShortcuts, OSLog)
 - **Naming**: camelCase variables/functions, PascalCase types
 - **Comments**: Minimal - use `//` single line, `/* */` blocks
-- **Error Handling**: do-catch blocks, `print()` for errors
+- **Error Handling**: do-catch blocks, Logger for errors (some legacy `print()` still exists)
 - **File Organization**: One main type per file, group with MARK comments
 
 ## Required Architecture

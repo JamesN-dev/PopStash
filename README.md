@@ -1,50 +1,29 @@
 # PopStash
 
+> **⚠️ Pre-release Software**: PopStash is currently in active development and not ready for production use. Features may be incomplete, unstable, or subject to change.
+
 A powerful clipboard manager for macOS that keeps your copy history organized and accessible.
 
 ## Features
 
-### Core Functionality
-
 - **Clipboard History** - Automatically saves everything you copy
-- **Quick Access** - Global hotkey to instantly view your clipboard history
+- **Quick Access** - Global hotkey to instantly view your clipboard history  
 - **Smart Search** - Find any copied item with real-time search
 - **Pin Important Items** - Keep frequently used content at the top
-
-### Modern Interface
-
 - **Glass Effect Design** - Beautiful translucent interface that fits macOS
-- **Dual Panel Layout** - Main clipboard view with optional metadata sidebar
 - **Keyboard Navigation** - Full keyboard support with arrow keys and shortcuts
-- **Multi-Selection** - Select and manage multiple items at once
-
-### Content Support
-
-- **Text Snippets** - Copy and manage text of any length
-- **Image Support** - Preview and manage copied images
-- **Rich Metadata** - View source app, timestamps, and content details
-- **Quick Preview** - See content without leaving the clipboard manager
-
-### Productivity Features
-
-- **Instant Copy** - Click any item to copy it back to clipboard
-- **Keyboard Shortcuts** - Option+1-9 for quick access to recent items
+- **Text & Image Support** - Preview and manage copied text and images
 - **PopEditor Integration** - Edit text items in a dedicated editor window
-- **Smart Organization** - Pinned items stay at top, recent items below
-
-### Customization
-
-- **Accent Colors** - Choose from multiple color themes
-- **Item Count Display** - Show/hide clipboard item counter
-- **Configurable Shortcuts** - Customize global hotkeys
-- **Privacy Controls** - Manage what gets saved to clipboard history
 
 ## Installation
 
-1. Download the latest release from [Releases](https://github.com/JamesN-dev/PopStash/releases)
-2. Drag PopStash.app to your Applications folder
-3. Launch PopStash and grant necessary permissions
-4. Use the global hotkey (default: Cmd+Shift+V) to access your clipboard
+**Pre-release**: Currently in development. To try it out:
+
+1. Clone this repository
+2. Open PopStash.xcodeproj in Xcode
+3. Build and run the project
+4. Grant necessary permissions when prompted
+5. Use Option+C to capture clipboard content
 
 ## Usage
 
@@ -58,13 +37,11 @@ A powerful clipboard manager for macOS that keeps your copy history organized an
 
 ### Keyboard Shortcuts
 
-- `Cmd+Shift+V` - Open/close PopStash
-- `Option+1-9` - Quick copy recent items
+- `Option+C` - Capture clipboard content
 - `Arrow Keys` - Navigate clipboard items
 - `Enter` - Copy selected item
 - `Delete` - Remove selected item
 - `Cmd+A` - Select all items
-- `I` - Toggle metadata sidebar
 
 ### Advanced Features
 
